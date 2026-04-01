@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<title>美國連線代購下單頁 — Cutie & Pick Kids</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --cream:#FAF6F0;--sand:#F0E8DC;--warm:#E0CDB8;
+  --sage-pale:#EAF2EE;--sage:#7A9E8E;--sage-mid:#5D8C7A;--sage-dk:#3D6B5A;
+  --brown:#7A5C3A;--brown-lt:#C8946A;--brown-pale:#F5ECE4;
+  --dark:#3D2B1A;--muted:#9A8878;--bdr:#DDD0C0;--r:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{font-family:'Noto Sans TC',sans-serif;background:var(--cream);color:var(--dark);min-height:100vh;padding-bottom:90px}
+
+/* HERO */
+.hero{background:var(--sage-pale);border-bottom:1px solid #C8DDD6;padding:2.25rem 1.5rem 1.875rem;text-align:center}
+.hero-inner{max-width:480px;margin:0 auto}
+.hero-eyebrow{font-family:'Nunito',sans-serif;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--sage-mid);margin-bottom:.875rem;display:block}
+.hero-title{font-family:'Nunito',sans-serif;font-size:clamp(22px,6vw,30px);font-weight:800;color:var(--sage-dk);line-height:1.2;margin-bottom:.875rem}
+.hero-title em{color:var(--brown-lt);font-style:normal}
+.hero-desc{font-size:13px;color:var(--sage-dk);line-height:1.95;background:rgba(255,255,255,.65);border-radius:10px;padding:10px 16px;display:inline-block;border:1px solid #C8DDD6;margin-bottom:1.125rem}
+.hero-desc strong{color:var(--brown);font-weight:500}
+.hero-pills{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.hero-pill{background:rgba(255,255,255,.7);border:1px solid #C8DDD6;border-radius:20px;padding:5px 14px;font-size:11px;color:var(--sage-dk);font-family:'Nunito',sans-serif;font-weight:600}
+
+/* WRAP */
+.wrap{max-width:600px;margin:0 auto;padding:1.5rem 1rem 2rem}
+.sec-lbl{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:.875rem;display:flex;align-items:center;gap:10px;font-family:'Nunito',sans-serif;font-weight:700}
+.sec-lbl::after{content:'';flex:1;height:1px;background:var(--warm)}
+
+/* loading */
+.loading-bar{background:var(--sage-pale);border:1px solid #C8DDD6;border-radius:10px;padding:1.5rem;text-align:center;font-size:13px;color:var(--sage-mid);font-family:'Nunito',sans-serif;margin-bottom:1rem}
+
+/* CATEGORY */
+.cat-filter{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.25rem}
+.cat-btn{padding:7px 16px;border:1.5px solid var(--bdr);border-radius:20px;background:#fff;font-size:13px;font-family:'Nunito',sans-serif;font-weight:600;color:var(--muted);cursor:pointer;transition:all .15s;white-space:nowrap}
+.cat-btn:active{transform:scale(.96)}
+.cat-btn.on{background:var(--sage-dk);border-color:var(--sage-dk);color:#fff}
+.cat-btn:hover:not(.on){border-color:var(--sage-mid);color:var(--sage-dk)}
+
+/* GALLERY */
+.prod-gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:1.5rem}
+@media(min-width:480px){.prod-gallery{grid-template-columns:repeat(3,1fr);gap:14px}}
+.gallery-card{background:#fff;border:2px solid transparent;border-radius:var(--r);overflow:hidden;cursor:pointer;transition:border-color .2s,box-shadow .2s,transform .12s;position:relative}
+.gallery-card:active{transform:scale(.96)}
+.gallery-card.sel{border-color:var(--sage-mid);box-shadow:0 4px 16px rgba(61,107,90,.15)}
+.gallery-card.out{opacity:.5;cursor:not-allowed}
+.gallery-img{width:100%;aspect-ratio:1/1;background:var(--sage-pale);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--muted);text-align:center;line-height:1.5;padding:8px}
+.gallery-img img{width:100%;height:100%;object-fit:cover;display:block}
+.chk{position:absolute;top:8px;right:8px;width:22px;height:22px;background:var(--sage-mid);border-radius:50%;display:none;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:800}
+.gallery-card.sel .chk{display:flex}
+.gallery-info{padding:9px 10px 11px}
+.g-code{font-size:9px;font-family:monospace;background:var(--sage-dk);color:#fff;border-radius:3px;padding:1px 6px;margin-bottom:5px;display:inline-block;letter-spacing:.5px}
+.g-name{font-size:12px;font-weight:500;line-height:1.35;margin-bottom:3px;color:var(--dark)}
+.g-price{font-size:14px;font-weight:700;color:var(--brown);font-family:'Nunito',sans-serif}
+.g-stock{font-size:10px;padding:2px 6px;border-radius:5px;margin-top:3px;display:inline-block;font-family:'Nunito',sans-serif;font-weight:600}
+.gs-low{background:#FFF3E0;color:#BF6000}
+.gs-out{background:#FDECEA;color:#922B21}
+
+/* CART inline */
+.cart-box{background:#fff;border:1.5px solid var(--bdr);border-radius:var(--r);overflow:hidden}
+.cart-hd{padding:11px 16px;border-bottom:1px solid var(--bdr);font-size:13px;font-weight:500;display:flex;justify-content:space-between;align-items:center;font-family:'Nunito',sans-serif}
+.cart-badge{background:var(--brown);color:#fff;font-size:11px;padding:2px 10px;border-radius:10px;font-weight:700}
+.cart-row{display:flex;align-items:center;gap:10px;padding:11px 16px;border-bottom:1px solid var(--bdr);font-size:13px}
+.cart-row:last-child{border-bottom:none}
+.cri{flex:1;min-width:0;line-height:1.5}
+.cri-sub{font-size:11px;color:var(--muted)}
+.cr-price{font-weight:700;color:var(--brown);white-space:nowrap;font-family:'Nunito',sans-serif}
+.cr-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px;padding:0 4px;flex-shrink:0;line-height:1}
+.cart-total-row{padding:11px 16px;display:flex;justify-content:space-between;align-items:center;background:var(--sand)}
+.cart-total-lbl{font-size:12px;color:var(--muted);font-family:'Nunito',sans-serif}
+.cart-total-val{font-size:20px;font-weight:800;color:var(--dark);font-family:'Nunito',sans-serif}
+
+/* FORM */
+.form-card{background:#fff;border:1.5px solid var(--bdr);border-radius:var(--r);padding:1.25rem;margin-bottom:1.5rem}
+.field{margin-bottom:12px}
+.field:last-child{margin-bottom:0}
+.field label{font-size:11px;color:var(--muted);letter-spacing:.5px;display:block;margin-bottom:5px;font-family:'Nunito',sans-serif;font-weight:700}
+.field input,.field textarea{width:100%;padding:11px 13px;border:1.5px solid var(--bdr);border-radius:10px;font-size:15px;font-family:'Noto Sans TC',sans-serif;color:var(--dark);background:#fff;outline:none;transition:border-color .15s;-webkit-appearance:none}
+.field input:focus,.field textarea:focus{border-color:var(--sage-mid)}
+.field textarea{resize:vertical;min-height:68px;line-height:1.6}
+.req{color:var(--brown-lt)}
+
+/* SUBMIT */
+.submit-btn{width:100%;padding:16px;background:var(--sage-dk);color:#fff;border:none;border-radius:var(--r);font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;cursor:pointer;letter-spacing:.5px;transition:background .2s;display:flex;align-items:center;justify-content:center;gap:8px;-webkit-appearance:none}
+.submit-btn:hover{background:var(--dark)}
+.submit-btn:active{transform:scale(.98)}
+.submit-btn:disabled{background:var(--muted);cursor:not-allowed}
+.bottom-hint{text-align:center;margin-top:10px;font-size:11px;color:var(--muted);font-family:'Nunito',sans-serif}
+
+/* FAB */
+.fab{position:fixed;bottom:24px;right:20px;width:56px;height:56px;border-radius:50%;background:var(--brown);color:#fff;border:none;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(122,92,58,.4);z-index:50;font-size:22px;transition:transform .15s}
+.fab:active{transform:scale(.9)}
+.fab-n{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;padding:0 5px;background:#E53935;color:#fff;border-radius:10px;font-size:11px;font-weight:800;font-family:'Nunito',sans-serif;display:flex;align-items:center;justify-content:center;border:2px solid #fff}
+
+/* MODAL */
+.mo{display:none;position:fixed;inset:0;background:rgba(40,30,20,.55);z-index:80;align-items:flex-end;justify-content:center}
+.mo.open{display:flex;animation:fbg .2s ease}
+@keyframes fbg{from{opacity:0}to{opacity:1}}
+.ms{background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:600px;max-height:88vh;overflow-y:auto;animation:sup .3s cubic-bezier(.34,1.15,.64,1)}
+@keyframes sup{from{transform:translateY(60px);opacity:0}to{transform:translateY(0);opacity:1}}
+.sh{width:36px;height:4px;background:var(--warm);border-radius:2px;margin:12px auto 4px}
+.sc{position:absolute;top:14px;right:16px;background:var(--sage-pale);border:none;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px;color:var(--muted);display:flex;align-items:center;justify-content:center}
+.si{padding:0 1.25rem 2rem;position:relative}
+
+/* prod modal */
+.mp-prev{display:flex;gap:14px;align-items:center;padding:1rem 0;border-bottom:1px solid var(--bdr);margin-bottom:1rem}
+.mp-thumb{width:70px;height:70px;border-radius:10px;background:var(--sage-pale);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--muted);text-align:center}
+.mp-thumb img{width:100%;height:100%;object-fit:cover}
+.mp-name{font-size:15px;font-weight:500;line-height:1.35;margin-bottom:4px}
+.mp-price{font-size:16px;font-weight:700;color:var(--brown);font-family:'Nunito',sans-serif}
+.cfg-lbl{font-size:11px;color:var(--muted);margin-bottom:7px;font-family:'Nunito',sans-serif;font-weight:700;letter-spacing:.3px}
+.sz-row{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:1.125rem}
+.sz-btn{padding:8px 15px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;cursor:pointer;transition:all .15s;background:#fff;font-family:'Noto Sans TC',sans-serif;color:var(--dark);min-width:56px;text-align:center}
+.sz-btn:active{transform:scale(.93)}
+.sz-btn.on{background:var(--sage-dk);border-color:var(--sage-dk);color:#fff;font-weight:500}
+.qty-row{display:flex;align-items:center;margin-bottom:1.25rem}
+.qty-btn{width:40px;height:40px;border:1.5px solid var(--bdr);border-radius:8px;background:#fff;cursor:pointer;font-size:22px;display:flex;align-items:center;justify-content:center;transition:all .15s;color:var(--dark)}
+.qty-btn:active{transform:scale(.88);background:var(--sand)}
+.qty-n{font-size:20px;font-weight:800;min-width:52px;text-align:center;font-family:'Nunito',sans-serif}
+.mo-sub{margin-left:auto;font-size:15px;font-weight:700;color:var(--brown);font-family:'Nunito',sans-serif}
+.mo-add-btn{width:100%;padding:14px;border:none;border-radius:12px;background:var(--sage-dk);color:#fff;font-size:15px;font-family:'Nunito',sans-serif;font-weight:800;cursor:pointer;transition:all .15s}
+.mo-add-btn:active{transform:scale(.97)}
+
+/* cart modal */
+.cm-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--bdr);font-size:13px}
+.cm-row:last-child{border-bottom:none}
+.cm-info{flex:1;min-width:0;line-height:1.5}
+.cm-sub{font-size:11px;color:var(--muted)}
+.cm-price{font-weight:700;color:var(--brown);white-space:nowrap;font-family:'Nunito',sans-serif}
+.cm-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px;padding:0 4px;flex-shrink:0;line-height:1}
+.cm-total{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-top:1.5px solid var(--warm);margin-bottom:1.25rem}
+.cm-total-lbl{font-size:13px;color:var(--muted);font-family:'Nunito',sans-serif}
+.cm-total-val{font-size:22px;font-weight:800;color:var(--dark);font-family:'Nunito',sans-serif}
+.cm-empty{text-align:center;padding:2rem 0;color:var(--muted);font-size:14px;font-family:'Nunito',sans-serif}
+.back-btn{width:100%;padding:12px;border:1.5px solid var(--bdr);border-radius:12px;background:#fff;color:var(--muted);font-size:13px;font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer;margin-bottom:10px}
+.go-btn{width:100%;padding:14px;border:none;border-radius:12px;background:var(--sage-dk);color:#fff;font-size:15px;font-family:'Nunito',sans-serif;font-weight:800;cursor:pointer}
+
+/* success modal */
+.ss-title{font-family:'Nunito',sans-serif;font-size:22px;font-weight:800;text-align:center;color:var(--dark);margin-bottom:4px}
+.ss-sub{font-size:13px;color:var(--muted);text-align:center;margin-bottom:1.25rem;line-height:1.8;background:var(--sage-pale);border-radius:8px;padding:10px 14px;border:1px solid #C8DDD6}
+.ss-sub strong{color:var(--sage-dk)}
+.oid-box{background:var(--sand);border-radius:10px;padding:12px 14px;margin-bottom:1rem;text-align:center;border:1px solid var(--warm)}
+.oid-lbl{font-size:11px;color:var(--muted);margin-bottom:3px;font-family:'Nunito',sans-serif;font-weight:700;letter-spacing:.5px}
+.oid-val{font-size:19px;font-weight:700;font-family:monospace;color:var(--dark)}
+.sum-box{border:1.5px solid var(--bdr);border-radius:10px;overflow:hidden;margin-bottom:1.25rem}
+.sum-hd{background:var(--sand);padding:10px 14px;font-size:11px;font-weight:700;color:var(--muted);font-family:'Nunito',sans-serif;letter-spacing:.5px}
+.sum-row{padding:10px 14px;border-top:1px solid var(--bdr);font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.sum-rn{flex:1;min-width:0;line-height:1.4}
+.sum-rs{font-size:11px;color:var(--muted)}
+.sum-rp{font-weight:700;color:var(--brown);font-family:'Nunito',sans-serif;white-space:nowrap}
+.sum-total{padding:12px 14px;border-top:1.5px solid var(--warm);background:var(--sand);display:flex;justify-content:space-between;align-items:center}
+.sum-tl{font-size:12px;color:var(--muted);font-family:'Nunito',sans-serif}
+.sum-tv{font-size:18px;font-weight:800;color:var(--dark);font-family:'Nunito',sans-serif}
+.line-btn{width:100%;padding:15px;background:#06C755;color:#fff;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:background .2s;-webkit-appearance:none}
+.line-btn:active{background:#059C42}
+.lc{width:26px;height:26px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+.toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--dark);color:#fff;padding:10px 20px;border-radius:10px;font-size:13px;opacity:0;transition:all .25s;z-index:200;white-space:nowrap;font-family:'Nunito',sans-serif;font-weight:600;max-width:85vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-inner">
+    <span class="hero-eyebrow">Cutie & Pick Kids</span>
+    <div class="hero-title">美國連線<em>代購</em>下單頁</div>
+    <div class="hero-desc">
+      住於美國，<strong>親自購買、親自把關</strong><br>
+      下標後等 <strong>15–30 天</strong>到貨
+    </div>
+    <div class="hero-pills">
+      <span class="hero-pill">🇺🇸 美國直購</span>
+      <span class="hero-pill">正品保證</span>
+      <span class="hero-pill">LINE 聊更多</span>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="sec-lbl">商品分類</div>
+  <div class="cat-filter" id="catFilter">
+    <button class="cat-btn on" onclick="setCat('all',this)">全部</button>
+    <button class="cat-btn" onclick="setCat('A',this)">👕 嬰兒童裝</button>
+    <button class="cat-btn" onclick="setCat('C',this)">📚 童書繪本</button>
+    <button class="cat-btn" onclick="setCat('D',this)">🧸 玩具</button>
+    <button class="cat-btn" onclick="setCat('E',this)">🏠 生活居家</button>
+  </div>
+
+  <div class="sec-lbl">選擇商品</div>
+  <div id="loadingBar" class="loading-bar">⏳ 商品載入中...</div>
+  <div class="prod-gallery" id="prodGallery"></div>
+
+  <div id="cartWrap" style="display:none;margin-bottom:1.5rem">
+    <div class="sec-lbl">購物清單</div>
+    <div class="cart-box">
+      <div class="cart-hd"><span>已選商品</span><span class="cart-badge" id="cartBadge">0 件</span></div>
+      <div id="cartRows"></div>
+      <div class="cart-total-row">
+        <span class="cart-total-lbl">商品小計（運費另計）</span>
+        <span class="cart-total-val" id="cartTotal">NT$ 0</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec-lbl">您的資訊</div>
+  <div class="form-card">
+    <div class="field">
+      <label>LINE 名稱 <span class="req">*</span></label>
+      <input id="lineName" placeholder="您在 LINE 的名稱或暱稱" autocomplete="name"/>
+    </div>
+    <div class="field">
+      <label>備註（選填）</label>
+      <textarea id="note" placeholder="顏色偏好、尺寸不確定等，歡迎備註"></textarea>
+    </div>
+  </div>
+
+  <button class="submit-btn" id="submitBtn" onclick="submitOrder()">
+    確認送出下單
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+  <div class="bottom-hint">送出後請跳轉 LINE 完成最後確認</div>
+</div>
+
+<button class="fab" id="fab" onclick="openCartMo()">🛍<span class="fab-n" id="fabN">0</span></button>
+
+<!-- 商品 Modal -->
+<div class="mo" id="prodMo">
+  <div class="ms">
+    <div class="sh"></div>
+    <button class="sc" onclick="closeProdMo()">×</button>
+    <div class="si">
+      <div class="mp-prev">
+        <div class="mp-thumb" id="moThumb"></div>
+        <div><div class="mp-name" id="moName"></div><div class="mp-price" id="moPrice"></div></div>
+      </div>
+      <div id="moSzSec">
+        <div class="cfg-lbl">選擇尺寸 <span style="color:var(--brown-lt)">*</span></div>
+        <div class="sz-row" id="moSzRow"></div>
+      </div>
+      <div class="cfg-lbl">數量</div>
+      <div class="qty-row" style="margin-bottom:1.25rem">
+        <button class="qty-btn" onclick="chQty(-1)">−</button>
+        <span class="qty-n" id="qtyN">1</span>
+        <button class="qty-btn" onclick="chQty(1)">＋</button>
+        <span class="mo-sub" id="moSub"></span>
+      </div>
+      <button class="mo-add-btn" onclick="addToCart()">＋ 加入購物清單</button>
+    </div>
+  </div>
+</div>
+
+<!-- 購物清單 Modal -->
+<div class="mo" id="cartMo">
+  <div class="ms">
+    <div class="sh"></div>
+    <button class="sc" onclick="closeCartMo()">×</button>
+    <div class="si">
+      <div style="font-family:'Nunito',sans-serif;font-size:17px;font-weight:800;padding:.75rem 0 1rem;color:var(--dark)">
+        購物清單 <span style="font-size:13px;color:var(--muted);font-weight:600" id="cmCount"></span>
+      </div>
+      <div id="cmRows"></div>
+      <div class="cm-total">
+        <span class="cm-total-lbl">商品小計（運費另計）</span>
+        <span class="cm-total-val" id="cmTotal">NT$ 0</span>
+      </div>
+      <button class="back-btn" onclick="closeCartMo()">← 繼續選購</button>
+      <button class="go-btn" onclick="closeCartMo();document.getElementById('lineName').scrollIntoView({behavior:'smooth',block:'center'});document.getElementById('lineName').focus()">前往填寫資訊 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- 成功 Modal -->
+<div class="mo" id="successMo">
+  <div class="ms">
+    <div class="sh"></div>
+    <div class="si" style="padding-top:.5rem">
+      <div class="ss-title">購物車加入完成！🎉</div>
+      <br>
+      <div class="ss-sub">
+        確認無誤後，請點下方<strong>綠色按鈕</strong>，<br>
+        將訂單傳送到官方 LINE 後，才算下單成功唷！
+      </div>
+      <div class="oid-box">
+        <div class="oid-lbl">訂單編號</div>
+        <div class="oid-val" id="successId">—</div>
+      </div>
+      <div class="sum-box">
+        <div class="sum-hd">訂單明細</div>
+        <div id="sumRows"></div>
+        <div class="sum-total">
+          <span class="sum-tl">商品小計（運費另計）</span>
+          <span class="sum-tv" id="sumTotal">NT$ 0</span>
+        </div>
+      </div>
+      <button class="line-btn" id="lineJumpBtn" onclick="jumpToLine()">
+        <div class="lc">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="#06C755"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.281.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.07 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
+        </div>
+        確認下標，傳送訂單明細至官方 LINE
+      </button>
+
+      <!-- 電腦版提示（手機不顯示） -->
+      <div id="desktopHint" style="display:none;margin-top:12px;background:var(--sage-pale);border:1px solid #C8DDD6;border-radius:10px;padding:14px 16px;font-size:13px;line-height:1.9;color:var(--sage-dk)">
+        ✅ 訂單訊息已複製到剪貼簿！<br>
+        請照以下步驟完成下單：<br>
+        <strong>① 打開電腦版 LINE</strong><br>
+        <strong>② 搜尋官方帳號：@892tzgju</strong><br>
+        <strong>③ 貼上訊息（Ctrl+V）並傳送</strong>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════
+// ★ 替換成你的 Apps Script Web App URL
+// ══════════════════════════════════════════
+const SCRIPT_URL = "https://script.google.com/macros/s/你的部署ID/exec";
+
+// ★ 替換成你的 LINE 官方帳號 ID（@開頭）
+const LINE_ID = "@892tzgju";
+
+// 備用商品（Sheets 讀取失敗時顯示）
+const FALLBACK = [];
+
+let PRODUCTS = [];
+let currentCat = 'all';
+let currentPid = null;
+let currentSize = null;
+let qty = 1;
+let cart = [];
+let lastOid = '';
+let lastMsg = '';
+
+// ── 啟動：從 Google Sheets 讀商品 ──
+async function loadProducts() {
+  try {
+    const res = await fetch(`${SCRIPT_URL}?action=getProducts`);
+    const data = await res.json();
+    if (data.ok && data.products.length) {
+      PRODUCTS = data.products.map(p => ({
+        ...p,
+        price: Number(p.price),
+        sizes: Array.isArray(p.sizes) ? p.sizes : (p.sizes ? String(p.sizes).split(',').map(s=>s.trim()).filter(Boolean) : [])
+      }));
+    } else {
+      PRODUCTS = FALLBACK;
+    }
+  } catch(e) {
+    PRODUCTS = FALLBACK;
+  }
+  document.getElementById('loadingBar').style.display = 'none';
+  renderGallery();
+}
+
+// ── 分類 ──
+function setCat(cat, btn) {
+  currentCat = cat;
+  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderGallery();
+}
+
+// ── 商品牆 ──
+function renderGallery() {
+  const list = currentCat==='all' ? PRODUCTS : PRODUCTS.filter(p=>p.cat===currentCat);
+  const g = document.getElementById('prodGallery');
+  if (!list.length) {
+    g.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--muted);font-size:13px">此分類暫無商品</div>';
+    return;
+  }
+  g.innerHTML = list.map(p=>`
+    <div class="gallery-card ${p.stock==='out'?'out':''}" onclick="${p.stock!=='out'?`openProdMo('${p.id}')`:''}" >
+      <div class="chk">✓</div>
+      <div class="gallery-img">
+        ${p.img_url?`<img src="${p.img_url}" alt="${p.name}" loading="lazy">`:`<span>📷<br>圖片上傳<br>後顯示</span>`}
+      </div>
+      <div class="gallery-info">
+        <span class="g-code">#${p.id}</span>
+        <div class="g-name">${p.name}</div>
+        <div class="g-price">NT$${Number(p.price).toLocaleString()}</div>
+        ${p.stock==='low'?'<span class="g-stock gs-low">快售完</span>':''}
+        ${p.stock==='out'?'<span class="g-stock gs-out">已售完</span>':''}
+      </div>
+    </div>`).join('');
+}
+
+// ── 商品 Modal ──
+function openProdMo(pid) {
+  currentPid=pid; currentSize=null; qty=1;
+  const p = PRODUCTS.find(x=>x.id===pid);
+  document.getElementById('moThumb').innerHTML = p.img_url ? `<img src="${p.img_url}" alt="${p.name}">` : '📷';
+  document.getElementById('moName').textContent = p.name;
+  document.getElementById('moPrice').textContent = `NT$${Number(p.price).toLocaleString()}`;
+  const ss = document.getElementById('moSzSec');
+  if (p.sizes && p.sizes.length) {
+    ss.style.display='block';
+    document.getElementById('moSzRow').innerHTML = p.sizes.map(s=>
+      `<button class="sz-btn" onclick="pickSz('${s}',this)">${s}</button>`).join('');
+  } else { ss.style.display='none'; }
+  updSub();
+  document.getElementById('prodMo').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeProdMo(){document.getElementById('prodMo').classList.remove('open');document.body.style.overflow='';}
+function pickSz(s,btn){currentSize=s;document.querySelectorAll('#moSzRow .sz-btn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');}
+function chQty(d){qty=Math.max(1,Math.min(10,qty+d));updSub();}
+function updSub(){
+  const p=PRODUCTS.find(x=>x.id===currentPid);
+  if(p){document.getElementById('moSub').textContent=`NT$${(Number(p.price)*qty).toLocaleString()}`;}
+  document.getElementById('qtyN').textContent=qty;
+}
+
+// ── 加入購物清單 ──
+function addToCart(){
+  const p=PRODUCTS.find(x=>x.id===currentPid);
+  if(!p){toast('請先選擇商品');return;}
+  if(p.sizes&&p.sizes.length&&!currentSize){toast('請選擇尺寸');return;}
+  cart.push({uid:Date.now(),pid:p.id,name:p.name,size:currentSize||'—',qty,price:Number(p.price)*qty});
+  closeProdMo();
+  renderInlineCart();
+  updateFab();
+  toast(`✓ 已加入！共 ${cart.reduce((a,x)=>a+x.qty,0)} 件`);
+}
+
+// ── 購物清單 Modal ──
+function openCartMo(){
+  renderCartMo();
+  document.getElementById('cartMo').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeCartMo(){document.getElementById('cartMo').classList.remove('open');document.body.style.overflow='';}
+function renderCartMo(){
+  const total=cart.reduce((a,x)=>a+x.price,0);
+  const tq=cart.reduce((a,x)=>a+x.qty,0);
+  document.getElementById('cmCount').textContent=`(${tq} 件)`;
+  document.getElementById('cmTotal').textContent=`NT$${total.toLocaleString()}`;
+  document.getElementById('cmRows').innerHTML=cart.length
+    ?cart.map(x=>`<div class="cm-row"><div class="cm-info">${x.name}<div class="cm-sub">尺寸：${x.size}・數量：${x.qty}</div></div><span class="cm-price">NT$${x.price.toLocaleString()}</span><button class="cm-del" onclick="delItem(${x.uid})">×</button></div>`).join('')
+    :`<div class="cm-empty">清單是空的，<br>去挑幾樣喜歡的吧！</div>`;
+}
+
+// ── inline 購物清單 ──
+function renderInlineCart(){
+  const wrap=document.getElementById('cartWrap');
+  if(!cart.length){wrap.style.display='none';return;}
+  wrap.style.display='block';
+  const total=cart.reduce((a,x)=>a+x.price,0);
+  const tq=cart.reduce((a,x)=>a+x.qty,0);
+  document.getElementById('cartBadge').textContent=tq+'件';
+  document.getElementById('cartTotal').textContent='NT$'+total.toLocaleString();
+  document.getElementById('cartRows').innerHTML=cart.map(x=>`
+    <div class="cart-row">
+      <div class="cri">${x.name}<div class="cri-sub">尺寸：${x.size}・數量：${x.qty}</div></div>
+      <span class="cr-price">NT$${x.price.toLocaleString()}</span>
+      <button class="cr-del" onclick="delItem(${x.uid})">×</button>
+    </div>`).join('');
+}
+
+function delItem(uid){
+  cart=cart.filter(x=>x.uid!==uid);
+  renderInlineCart();renderCartMo();updateFab();
+}
+
+function updateFab(){
+  const fab=document.getElementById('fab');
+  const n=cart.reduce((a,x)=>a+x.qty,0);
+  if(n>0){fab.style.display='flex';document.getElementById('fabN').textContent=n;}
+  else fab.style.display='none';
+}
+
+// ── 送出訂單 ──
+async function submitOrder(){
+  if(!cart.length){toast('請先選擇商品並加入清單');return;}
+  const name=document.getElementById('lineName').value.trim();
+  if(!name){toast('請填寫 LINE 名稱');return;}
+  const note=document.getElementById('note').value.trim();
+  const oid='ORD-'+new Date().toISOString().slice(0,7).replace('-','')+'-'+Math.floor(1000+Math.random()*9000);
+  lastOid=oid;
+  const total=cart.reduce((a,x)=>a+x.price,0);
+
+  // 產生 LINE 訊息
+  const lines=cart.map(x=>`• ${x.name}（${x.size}）×${x.qty}　NT$${x.price.toLocaleString()}`).join('\n');
+  lastMsg=`【Cutie & Pick Kids 下單】\n訂單編號：${oid}\nLINE名稱：${name}\n\n${lines}\n\n商品小計：NT$${total.toLocaleString()}${note?'\n備註：'+note:''}`;
+
+  // 寫入 Google Sheets（no-cors，非同步不等待）
+  fetch(SCRIPT_URL, {
+    method:'POST', mode:'no-cors',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({action:'submitOrder',order_id:oid,line_name:name,note,items:cart,total})
+  }).catch(()=>{});
+
+  // 成功頁
+  document.getElementById('successId').textContent=oid;
+  document.getElementById('sumRows').innerHTML=cart.map(x=>`
+    <div class="sum-row">
+      <div class="sum-rn">${x.name}<div class="sum-rs">尺寸：${x.size}・數量：${x.qty}</div></div>
+      <span class="sum-rp">NT$${x.price.toLocaleString()}</span>
+    </div>`).join('');
+  document.getElementById('sumTotal').textContent='NT$'+total.toLocaleString();
+
+  const btn=document.getElementById('submitBtn');
+  btn.disabled=true; btn.textContent='處理中...';
+  setTimeout(()=>{
+    btn.disabled=false;
+    btn.innerHTML='確認送出下單 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    document.getElementById('successMo').classList.add('open');
+    document.body.style.overflow='hidden';
+    document.getElementById('fab').style.display='none';
+  },800);
+}
+
+// ── LINE 跳轉（手機自動帶入訊息，電腦自動複製）──
+function jumpToLine(){
+  const encoded = encodeURIComponent(lastMsg);
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+  if(isMobile){
+    // 手機：直接跳轉 LINE，訊息自動帶入對話框
+    window.location.href = `https://line.me/R/oaMessage/${LINE_ID}/?${encoded}`;
+  } else {
+    // 電腦：自動複製訊息，並顯示引導提示
+    navigator.clipboard && navigator.clipboard.writeText(lastMsg).then(function(){
+      showDesktopHint();
+    }).catch(function(){
+      showDesktopHint();
+    });
+  }
+}
+
+function showDesktopHint(){
+  document.getElementById('desktopHint').style.display = 'block';
+  document.getElementById('lineJumpBtn').textContent = '✓ 訊息已複製！';
+  document.getElementById('lineJumpBtn').style.background = '#059C42';
+}
+
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+// 點遮罩關閉
+['prodMo','cartMo'].forEach(id=>{
+  document.getElementById(id).addEventListener('click',function(e){
+    if(e.target===this){this.classList.remove('open');document.body.style.overflow='';}
+  });
+});
+
+loadProducts();
+</script>
+</body>
+</html>
