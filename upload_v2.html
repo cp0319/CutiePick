@@ -334,6 +334,10 @@ async function uploadToDrive(file){
 
   try {
     const base64 = await fileToBase64(file);
+
+    // Apps Script 需要用 no-cors，但無法接收回應
+    // 改用 Google Apps Script 的 jsonp 方式或分兩步驟
+    // 方法：先用 FormData POST，Apps Script 回傳 JSON
     const res = await fetch(SCRIPT_URL, {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
@@ -341,18 +345,25 @@ async function uploadToDrive(file){
         action: 'uploadImage',
         imageData: base64,
         mimeType: file.type,
-        filename: 'cp_' + Date.now() + '.' + file.name.split('.').pop()
+        filename: 'cp_' + Date.now() + '.' + (file.name.split('.').pop() || 'jpg')
       })
     });
-    const data = await res.json();
+
+    // Apps Script 有時回傳不是 JSON，先確認
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); }
+    catch(e) { throw new Error('回應格式錯誤：' + text.slice(0,100)); }
+
     if(data.ok){
       uploadedImgUrl = data.url;
       setImgStatus('ok', '✓ 已上傳到 Google Drive');
     } else {
-      throw new Error(data.error || 'upload failed');
+      throw new Error(data.error || '上傳失敗');
     }
   } catch(e) {
-    setImgStatus('err', '上傳失敗，請點重試');
+    console.error('Upload error:', e);
+    setImgStatus('err', '上傳失敗：' + (e.message||'請點重試'));
     document.getElementById('imgRetryBtn').style.display = 'block';
   }
 
