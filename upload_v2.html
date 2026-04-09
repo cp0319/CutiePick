@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<title>CP 快速上架</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Noto+Sans+TC:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --cream:#FAF6F0;--sand:#F0E8DC;--warm:#E0CDB8;
+  --sage-pale:#EAF2EE;--sage:#5D8C7A;--sage-dk:#3D6B5A;
+  --brown:#7A5C3A;--brown-lt:#C8946A;--brown-pale:#F5ECE4;
+  --dark:#3D2B1A;--muted:#9A8878;--bdr:#DDD0C0;--r:12px;
+  --green:#059C42;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Noto Sans TC',sans-serif;background:var(--cream);color:var(--dark);min-height:100vh;padding-bottom:100px}
+
+.topbar{background:var(--dark);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.topbar-title{font-family:'Nunito',sans-serif;color:#fff;font-size:16px;font-weight:800}
+.topbar-id{font-family:monospace;font-size:12px;color:rgba(255,255,255,.5);background:rgba(255,255,255,.1);padding:3px 10px;border-radius:10px}
+
+.wrap{max-width:520px;margin:0 auto;padding:1.25rem 1rem}
+
+.sec{margin-bottom:1.5rem}
+.sec-lbl{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:.75rem;display:flex;align-items:center;gap:8px;font-family:'Nunito',sans-serif;font-weight:700}
+.sec-lbl::after{content:'';flex:1;height:1px;background:var(--warm)}
+
+/* IMAGE */
+.img-upload-box{background:#fff;border:1.5px dashed var(--warm);border-radius:var(--r);overflow:hidden;margin-bottom:1.5rem}
+.img-tap-area{width:100%;aspect-ratio:4/3;background:var(--sage-pale);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;cursor:pointer}
+.img-tap-area img.preview{width:100%;height:100%;object-fit:contain;background:#fff}
+.img-placeholder{text-align:center;color:var(--sage);pointer-events:none}
+.img-ph-icon{font-size:52px;display:block;margin-bottom:8px}
+.img-ph-txt{font-size:15px;font-family:'Nunito',sans-serif;font-weight:800;color:var(--sage-dk)}
+.img-ph-sub{font-size:12px;color:var(--muted);margin-top:4px}
+#imgFileInput{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+
+.uploading-overlay{position:absolute;inset:0;background:rgba(255,255,255,.85);display:none;align-items:center;justify-content:center;flex-direction:column;gap:8px}
+.uploading-overlay.show{display:flex}
+.upload-spinner{width:36px;height:36px;border:3px solid var(--warm);border-top-color:var(--sage-dk);border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.uploading-txt{font-size:13px;font-family:'Nunito',sans-serif;font-weight:700;color:var(--sage-dk)}
+
+.img-status-bar{padding:10px 14px;border-top:1px solid var(--bdr);display:flex;align-items:center;gap:10px;font-size:12px}
+.img-status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.img-status-dot.none{background:var(--muted)}
+.img-status-dot.ok{background:var(--green)}
+.img-status-dot.err{background:#E24B4A}
+.img-status-txt{flex:1;color:var(--muted);font-family:'Nunito',sans-serif}
+.img-retry-btn{padding:4px 10px;background:var(--sage-dk);color:#fff;border:none;border-radius:6px;font-size:11px;font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer;display:none}
+
+/* BRAND */
+.brand-chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:8px}
+.chip{padding:7px 13px;border:1.5px solid var(--bdr);border-radius:20px;font-size:13px;cursor:pointer;background:#fff;font-family:'Nunito',sans-serif;font-weight:600;color:var(--muted);transition:all .15s;white-space:nowrap;user-select:none}
+.chip:active{transform:scale(.93)}
+.chip.on{background:var(--dark);border-color:var(--dark);color:#fff}
+
+/* INPUTS */
+.finput{width:100%;padding:11px 13px;border:1.5px solid var(--bdr);border-radius:10px;font-size:15px;font-family:'Noto Sans TC',sans-serif;color:var(--dark);background:#fff;outline:none;transition:border-color .15s;-webkit-appearance:none}
+.finput:focus{border-color:var(--sage)}
+.name-row{display:flex;gap:8px;align-items:center}
+.brand-badge{background:var(--dark);color:#fff;border-radius:8px;padding:0 12px;height:46px;font-size:13px;font-family:'Nunito',sans-serif;font-weight:700;display:none;align-items:center;white-space:nowrap;flex-shrink:0}
+
+/* DESC TAGS */
+.desc-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.dtag{padding:6px 12px;border:1.5px solid var(--bdr);border-radius:16px;font-size:12px;cursor:pointer;background:#fff;color:var(--muted);transition:all .15s;user-select:none}
+.dtag:active{transform:scale(.93)}
+.dtag.on{background:var(--sage-dk);border-color:var(--sage-dk);color:#fff}
+
+/* CAT */
+.cat-row{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.cat-btn{padding:10px;border:1.5px solid var(--bdr);border-radius:10px;background:#fff;font-size:13px;font-family:'Noto Sans TC',sans-serif;color:var(--muted);cursor:pointer;transition:all .15s;text-align:center}
+.cat-btn.on{background:var(--sage-dk);border-color:var(--sage-dk);color:#fff;font-weight:500}
+
+/* PRICE */
+.price-wrap{position:relative}
+.price-pre{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--muted);pointer-events:none;font-family:'Nunito',sans-serif;font-weight:700}
+.price-input{padding-left:42px !important}
+
+/* SIZE + STOCK TABLE */
+.sz-table{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden;border:1.5px solid var(--bdr)}
+.sz-table th{font-size:11px;color:var(--muted);padding:10px 12px;text-align:left;border-bottom:1px solid var(--bdr);font-weight:400;letter-spacing:.5px;font-family:'Nunito',sans-serif;background:var(--sand)}
+.sz-table td{padding:8px 10px;border-bottom:1px solid var(--bdr);vertical-align:middle}
+.sz-table tr:last-child td{border-bottom:none}
+.sz-cb{width:20px;height:20px;accent-color:var(--brown);cursor:pointer}
+.sz-lbl{font-size:14px;font-weight:500;padding-left:4px}
+.sz-stock-input{width:72px;padding:7px 10px;border:1.5px solid var(--bdr);border-radius:7px;font-size:14px;font-family:'Nunito',sans-serif;font-weight:700;text-align:center;outline:none;-webkit-appearance:none;color:var(--dark);background:#fff}
+.sz-stock-input:focus{border-color:var(--brown)}
+.sz-stock-input:disabled{background:var(--sand);color:var(--muted)}
+.sz-hint{font-size:11px;color:var(--muted);margin-top:8px;font-family:'Nunito',sans-serif}
+.sz-quick-btns{display:flex;gap:8px;margin-top:10px}
+.sz-qbtn{flex:1;padding:8px;border:1px solid var(--bdr);border-radius:8px;background:#fff;font-size:12px;color:var(--muted);cursor:pointer;font-family:'Nunito',sans-serif;font-weight:600}
+
+/* LAST SIZES */
+.last-sz-bar{background:var(--sage-pale);border:1px solid #C8DDD6;border-radius:8px;padding:10px 14px;margin-bottom:10px;display:none;align-items:center;gap:10px;font-size:12px;color:var(--sage-dk);font-family:'Nunito',sans-serif}
+.last-sz-apply{background:var(--sage-dk);color:#fff;border:none;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;flex-shrink:0}
+
+/* STOCK OVERALL */
+.stock-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stock-btn{padding:10px;border:1.5px solid var(--bdr);border-radius:10px;background:#fff;font-size:13px;font-family:'Noto Sans TC',sans-serif;color:var(--muted);cursor:pointer;transition:all .15s;text-align:center}
+.stock-btn.on{background:var(--sage-dk);border-color:var(--sage-dk);color:#fff;font-weight:500}
+
+/* SUBMIT */
+.submit-area{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--bdr);padding:12px 16px}
+.submit-btn{width:100%;max-width:520px;margin:0 auto;display:flex;padding:15px;background:var(--sage-dk);color:#fff;border:none;border-radius:var(--r);font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;cursor:pointer;letter-spacing:.5px;transition:background .2s;-webkit-appearance:none;align-items:center;justify-content:center;gap:8px}
+.submit-btn:active{transform:scale(.98)}
+.submit-btn:disabled{background:var(--muted);cursor:not-allowed}
+
+/* SUCCESS */
+.success-bar{display:none;background:var(--green);color:#fff;padding:12px 16px;border-radius:var(--r);margin-bottom:1rem;font-family:'Nunito',sans-serif;font-weight:700;font-size:14px;align-items:center;gap:10px}
+.success-bar.show{display:flex;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.success-oid{font-family:monospace;font-size:12px;opacity:.8;margin-left:auto}
+
+.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%) translateY(-10px);background:var(--dark);color:#fff;padding:10px 20px;border-radius:10px;font-size:13px;opacity:0;transition:all .25s;z-index:200;white-space:nowrap;font-family:'Nunito',sans-serif;font-weight:600;max-width:85vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-title">⚡ 快速上架</div>
+  <div class="topbar-id" id="topbarId">A01</div>
+</div>
+
+<div class="wrap">
+  <div class="success-bar" id="successBar">
+    <span>✓ 上架成功！繼續上架下一件</span>
+    <span class="success-oid" id="successOid"></span>
+  </div>
+
+  <!-- 圖片 -->
+  <div class="sec-lbl">商品照片</div>
+  <div class="img-upload-box">
+    <div class="img-tap-area" id="imgTapArea">
+      <input type="file" accept="image/*" capture="environment" id="imgFileInput" onchange="handlePhoto(this)">
+      <div class="img-placeholder" id="imgPlaceholder">
+        <span class="img-ph-icon">📷</span>
+        <div class="img-ph-txt">點擊拍照或選擇照片</div>
+        <div class="img-ph-sub">照片將自動上傳到 Google Drive</div>
+      </div>
+      <div class="uploading-overlay" id="uploadingOverlay">
+        <div class="upload-spinner"></div>
+        <div class="uploading-txt">上傳中...</div>
+      </div>
+    </div>
+    <div class="img-status-bar">
+      <div class="img-status-dot none" id="imgStatusDot"></div>
+      <span class="img-status-txt" id="imgStatusTxt">尚未選擇圖片</span>
+      <button class="img-retry-btn" id="imgRetryBtn" onclick="retryUpload()">重試</button>
+    </div>
+  </div>
+
+  <!-- 品牌 -->
+  <div class="sec">
+    <div class="sec-lbl">品牌</div>
+    <div class="brand-chips">
+      <div class="chip" onclick="pickBrand(this,'Polo Ralph Lauren')">Polo Ralph Lauren</div>
+      <div class="chip" onclick="pickBrand(this,'Nike')">Nike</div>
+      <div class="chip" onclick="pickBrand(this,'Jordan')">Jordan</div>
+      <div class="chip" onclick="pickBrand(this,'Tommy Hilfiger')">Tommy Hilfiger</div>
+      <div class="chip" onclick="pickBrand(this,'Calvin Klein')">Calvin Klein</div>
+      <div class="chip" onclick="pickBrand(this,'Levi\'s')">Levi's</div>
+      <div class="chip" onclick="pickBrand(this,'Carter\'s')">Carter's</div>
+      <div class="chip" onclick="pickBrand(this,'Barefoot Dreams')">Barefoot Dreams</div>
+      <div class="chip" onclick="pickBrand(this,'Angel Dear')">Angel Dear</div>
+      <div class="chip" onclick="pickBrand(this,'Hanna Andersson')">Hanna Andersson</div>
+      <div class="chip" id="otherChip" onclick="toggleOther()">其他…</div>
+    </div>
+    <input class="finput" id="otherBrandInput" placeholder="輸入品牌名稱" style="display:none" oninput="setOtherBrand(this.value)"/>
+  </div>
+
+  <!-- 商品名稱 -->
+  <div class="sec">
+    <div class="sec-lbl">商品名稱</div>
+    <div class="name-row">
+      <div class="brand-badge" id="brandBadge"></div>
+      <input class="finput" id="nameInput" placeholder="款式描述，例：有機棉連身衣三件組"/>
+    </div>
+  </div>
+
+  <!-- 描述標籤 -->
+  <div class="sec">
+    <div class="sec-lbl">描述標籤</div>
+    <div class="desc-tags">
+      <div class="dtag" onclick="td(this,'有機棉')">有機棉</div>
+      <div class="dtag" onclick="td(this,'純棉')">純棉</div>
+      <div class="dtag" onclick="td(this,'竹棉')">竹棉</div>
+      <div class="dtag" onclick="td(this,'超柔軟')">超柔軟</div>
+      <div class="dtag" onclick="td(this,'格紋')">格紋</div>
+      <div class="dtag" onclick="td(this,'素色')">素色</div>
+      <div class="dtag" onclick="td(this,'印花')">印花</div>
+      <div class="dtag" onclick="td(this,'條紋')">條紋</div>
+      <div class="dtag" onclick="td(this,'長袖')">長袖</div>
+      <div class="dtag" onclick="td(this,'短袖')">短袖</div>
+      <div class="dtag" onclick="td(this,'連身')">連身</div>
+      <div class="dtag" onclick="td(this,'附帽')">附帽</div>
+      <div class="dtag" onclick="td(this,'拉鍊')">拉鍊</div>
+      <div class="dtag" onclick="td(this,'口袋')">口袋</div>
+      <div class="dtag" onclick="td(this,'套裝')">套裝</div>
+      <div class="dtag" onclick="td(this,'三件組')">三件組</div>
+      <div class="dtag" onclick="td(this,'多色可選')">多色可選</div>
+      <div class="dtag" onclick="td(this,'plant系列')">plant系列</div>
+    </div>
+    <input class="finput" id="descExtra" placeholder="其他補充（選填）" style="margin-top:4px"/>
+  </div>
+
+  <!-- 分類 -->
+  <div class="sec">
+    <div class="sec-lbl">分類</div>
+    <div class="cat-row">
+      <button class="cat-btn on" onclick="pickCat(this,'A')">👕 嬰兒童裝</button>
+      <button class="cat-btn" onclick="pickCat(this,'C')">📚 童書繪本</button>
+      <button class="cat-btn" onclick="pickCat(this,'D')">🧸 玩具</button>
+      <button class="cat-btn" onclick="pickCat(this,'E')">🏠 生活居家</button>
+    </div>
+  </div>
+
+  <!-- 售價 -->
+  <div class="sec">
+    <div class="sec-lbl">售價（NT$，不含運費）</div>
+    <div class="price-wrap">
+      <span class="price-pre">NT$</span>
+      <input class="finput price-input" id="priceInput" type="number" placeholder="0" inputmode="numeric"/>
+    </div>
+  </div>
+
+  <!-- 尺寸 + 庫存 -->
+  <div class="sec">
+    <div class="sec-lbl">尺寸與庫存數量</div>
+
+    <div class="last-sz-bar" id="lastSzBar">
+      <span id="lastSzTxt">上次：</span>
+      <button class="last-sz-apply" onclick="restoreLastSizes()">套用上次</button>
+    </div>
+
+    <table class="sz-table">
+      <thead>
+        <tr>
+          <th style="width:40px"></th>
+          <th>尺寸</th>
+          <th>庫存件數</th>
+        </tr>
+      </thead>
+      <tbody id="szTableBody"></tbody>
+    </table>
+    <div class="sz-hint">※ 未勾選的尺寸不會顯示在買家頁面</div>
+    <div class="sz-quick-btns">
+      <button class="sz-qbtn" onclick="clearSizes()">全部清除</button>
+      <button class="sz-qbtn" onclick="selectAllSizes()">全選（各1件）</button>
+    </div>
+  </div>
+
+  <!-- 整體庫存（無尺寸商品用） -->
+  <div class="sec">
+    <div class="sec-lbl">整體庫存狀態（無尺寸商品適用）</div>
+    <div class="stock-row">
+      <button class="stock-btn on" onclick="pickStock(this,'available')">可預購</button>
+      <button class="stock-btn" onclick="pickStock(this,'low')">剩餘不多</button>
+      <button class="stock-btn" onclick="pickStock(this,'out')">已售完</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="submit-area">
+  <button class="submit-btn" id="submitBtn" onclick="submitProduct()">
+    ＋ 新增並同步 Sheets
+  </button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwObvIYjmcIiv-RhTLR_0Ix5VQfameYtvomHmlrF4j3IXqYOpRGs2T15v8mfS5jecn3GA/exec";
+
+const ALL_SIZES = ['0-3M','3-6M','9-12M','1T','2T','3T','4T','5T'];
+
+let selectedBrand = '';
+let selectedCat = 'A';
+let selectedStock = 'available';
+let selectedDescTags = [];
+let uploadedImgUrl = '';
+let pendingFile = null;
+let lastSizes = JSON.parse(localStorage.getItem('cp_last_sizes') || '[]');
+let productCount = JSON.parse(localStorage.getItem('cp_counts') || '{"A":0,"C":0,"D":0,"E":0}');
+
+function init(){
+  renderSzTable();
+  updateTopbarId();
+  showLastSzBar();
+}
+
+// ── 編號 ──
+function updateTopbarId(){
+  const n = (productCount[selectedCat] || 0) + 1;
+  document.getElementById('topbarId').textContent = selectedCat + String(n).padStart(2,'0');
+}
+function getNextId(){
+  const n = (productCount[selectedCat] || 0) + 1;
+  return selectedCat + String(n).padStart(2,'0');
+}
+
+// ── 拍照/選圖 → 自動上傳 Drive ──
+async function handlePhoto(input){
+  const file = input.files[0];
+  if(!file) return;
+  pendingFile = file;
+
+  // 先顯示本地預覽
+  const reader = new FileReader();
+  reader.onload = e => {
+    showPreview(e.target.result);
+  };
+  reader.readAsDataURL(file);
+
+  // 自動上傳
+  await uploadToDrive(file);
+}
+
+function showPreview(src){
+  const area = document.getElementById('imgTapArea');
+  document.getElementById('imgPlaceholder').style.display = 'none';
+  area.querySelectorAll('img.preview').forEach(x=>x.remove());
+  const img = document.createElement('img');
+  img.src = src; img.className = 'preview';
+  area.insertBefore(img, area.querySelector('.uploading-overlay'));
+}
+
+async function uploadToDrive(file){
+  setImgStatus('uploading');
+  document.getElementById('uploadingOverlay').classList.add('show');
+
+  try {
+    const base64 = await fileToBase64(file);
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        action: 'uploadImage',
+        imageData: base64,
+        mimeType: file.type,
+        filename: 'cp_' + Date.now() + '.' + file.name.split('.').pop()
+      })
+    });
+    const data = await res.json();
+    if(data.ok){
+      uploadedImgUrl = data.url;
+      setImgStatus('ok', '✓ 已上傳到 Google Drive');
+    } else {
+      throw new Error(data.error || 'upload failed');
+    }
+  } catch(e) {
+    setImgStatus('err', '上傳失敗，請點重試');
+    document.getElementById('imgRetryBtn').style.display = 'block';
+  }
+
+  document.getElementById('uploadingOverlay').classList.remove('show');
+}
+
+async function retryUpload(){
+  if(!pendingFile) return;
+  document.getElementById('imgRetryBtn').style.display = 'none';
+  await uploadToDrive(pendingFile);
+}
+
+function fileToBase64(file){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function setImgStatus(state, msg){
+  const dot = document.getElementById('imgStatusDot');
+  const txt = document.getElementById('imgStatusTxt');
+  dot.className = 'img-status-dot ' + (state==='ok'?'ok':state==='err'?'err':'none');
+  txt.textContent = msg || (state==='uploading'?'上傳中...':'尚未選擇圖片');
+}
+
+// ── 品牌 ──
+function pickBrand(el, brand){
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+  selectedBrand = brand;
+  document.getElementById('otherBrandInput').style.display = 'none';
+  const badge = document.getElementById('brandBadge');
+  badge.textContent = brand;
+  badge.style.display = 'flex';
+  document.getElementById('nameInput').focus();
+}
+
+function toggleOther(){
+  const input = document.getElementById('otherBrandInput');
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
+  document.getElementById('otherChip').classList.add('on');
+  const showing = input.style.display === 'block';
+  input.style.display = showing ? 'none' : 'block';
+  if(!showing) setTimeout(()=>input.focus(),50);
+}
+
+function setOtherBrand(val){
+  selectedBrand = val;
+  const badge = document.getElementById('brandBadge');
+  if(val){ badge.textContent = val; badge.style.display = 'flex'; }
+  else badge.style.display = 'none';
+}
+
+// ── 描述標籤 ──
+function td(el, tag){
+  el.classList.toggle('on');
+  if(el.classList.contains('on')) selectedDescTags.push(tag);
+  else selectedDescTags = selectedDescTags.filter(t=>t!==tag);
+}
+
+// ── 分類 ──
+function pickCat(el, cat){
+  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  selectedCat = cat;
+  updateTopbarId();
+}
+
+// ── 庫存狀態 ──
+function pickStock(el, stock){
+  document.querySelectorAll('.stock-btn').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  selectedStock = stock;
+}
+
+// ── 尺寸表格 ──
+function renderSzTable(){
+  const tbody = document.getElementById('szTableBody');
+  tbody.innerHTML = ALL_SIZES.map(s=>`
+    <tr id="szrow-${s}">
+      <td><input type="checkbox" class="sz-cb" id="szc-${s}" onchange="toggleSzRow('${s}')"></td>
+      <td><label class="sz-lbl" for="szc-${s}">${s}</label></td>
+      <td><input type="number" class="sz-stock-input" id="szn-${s}" value="1" min="0" max="99" disabled inputmode="numeric"></td>
+    </tr>`).join('');
+}
+
+function toggleSzRow(s){
+  const cb = document.getElementById('szc-'+s);
+  const numInput = document.getElementById('szn-'+s);
+  numInput.disabled = !cb.checked;
+  if(cb.checked && !numInput.value) numInput.value = '1';
+}
+
+function clearSizes(){
+  ALL_SIZES.forEach(s=>{
+    const cb = document.getElementById('szc-'+s);
+    const ni = document.getElementById('szn-'+s);
+    if(cb){ cb.checked = false; ni.disabled = true; }
+  });
+}
+
+function selectAllSizes(){
+  ALL_SIZES.forEach(s=>{
+    const cb = document.getElementById('szc-'+s);
+    const ni = document.getElementById('szn-'+s);
+    if(cb){ cb.checked = true; ni.disabled = false; if(!ni.value) ni.value='1'; }
+  });
+}
+
+function getSizesAndStock(){
+  const sizes = [];
+  const sizesStock = {};
+  ALL_SIZES.forEach(s=>{
+    const cb = document.getElementById('szc-'+s);
+    if(cb && cb.checked){
+      sizes.push(s);
+      const n = parseInt(document.getElementById('szn-'+s).value) || 1;
+      sizesStock[s] = n;
+    }
+  });
+  return { sizes, sizesStock };
+}
+
+// ── 上次尺寸記憶 ──
+function showLastSzBar(){
+  if(!lastSizes.length) return;
+  const bar = document.getElementById('lastSzBar');
+  document.getElementById('lastSzTxt').textContent = '上次勾選：' + lastSizes.join('、');
+  bar.style.display = 'flex';
+}
+
+function restoreLastSizes(){
+  clearSizes();
+  lastSizes.forEach(s=>{
+    const cb = document.getElementById('szc-'+s);
+    const ni = document.getElementById('szn-'+s);
+    if(cb){ cb.checked = true; ni.disabled = false; if(!ni.value) ni.value='1'; }
+  });
+  toast('✓ 已套用上次尺寸');
+}
+
+// ── 送出 ──
+async function submitProduct(){
+  const name = (selectedBrand ? selectedBrand + ' ' : '') + document.getElementById('nameInput').value.trim();
+  const price = parseInt(document.getElementById('priceInput').value);
+  const { sizes, sizesStock } = getSizesAndStock();
+
+  if(!uploadedImgUrl){ toast('請先上傳商品照片'); return; }
+  if(!name || !document.getElementById('nameInput').value.trim()){ toast('請填寫商品名稱'); return; }
+  if(!price || price <= 0){ toast('請填寫售價'); return; }
+
+  const descTags = selectedDescTags.join('・');
+  const descExtra = document.getElementById('descExtra').value.trim();
+  const desc = descTags && descExtra ? descTags + '・' + descExtra : (descTags || descExtra);
+
+  const id = getNextId();
+  const product = {
+    action: 'addProduct',
+    id, cat: selectedCat, name, desc, price,
+    sizes, sizes_stock: sizesStock,
+    stock: selectedStock,
+    img_url: uploadedImgUrl
+  };
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.textContent = '同步中...';
+
+  try {
+    await fetch(SCRIPT_URL, {
+      method:'POST', mode:'no-cors',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(product)
+    });
+
+    productCount[selectedCat] = (productCount[selectedCat] || 0) + 1;
+    localStorage.setItem('cp_counts', JSON.stringify(productCount));
+
+    if(sizes.length){
+      lastSizes = sizes;
+      localStorage.setItem('cp_last_sizes', JSON.stringify(sizes));
+    }
+
+    const bar = document.getElementById('successBar');
+    document.getElementById('successOid').textContent = '#' + id;
+    bar.classList.add('show');
+    setTimeout(()=>bar.classList.remove('show'), 4000);
+
+    resetForm();
+
+  } catch(e) {
+    toast('同步失敗，請確認網路與 SCRIPT_URL');
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '＋ 新增並同步 Sheets';
+}
+
+function resetForm(){
+  // 清圖片
+  uploadedImgUrl = ''; pendingFile = null;
+  document.getElementById('imgPlaceholder').style.display = '';
+  document.getElementById('imgTapArea').querySelectorAll('img.preview').forEach(x=>x.remove());
+  document.getElementById('imgFileInput').value = '';
+  setImgStatus('none', '尚未選擇圖片');
+  document.getElementById('imgRetryBtn').style.display = 'none';
+
+  // 清名稱、描述、價格
+  document.getElementById('nameInput').value = '';
+  document.getElementById('descExtra').value = '';
+  document.getElementById('priceInput').value = '';
+
+  // 清描述標籤
+  selectedDescTags = [];
+  document.querySelectorAll('.dtag').forEach(t=>t.classList.remove('on'));
+
+  // 清尺寸
+  clearSizes();
+
+  updateTopbarId();
+  showLastSzBar();
+  setTimeout(()=>document.getElementById('nameInput').focus(), 200);
+}
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2800);
+}
+
+init();
+</script>
+</body>
+</html>

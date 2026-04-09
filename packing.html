@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>包貨核對</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --cream:#FAF6F0;--sand:#F0E8DC;--warm:#E0CDB8;
+  --sage-pale:#EAF2EE;--sage-dk:#3D6B5A;
+  --brown:#7A5C3A;--brown-lt:#C8946A;
+  --dark:#3D2B1A;--muted:#9A8878;--bdr:#DDD0C0;
+  --green:#059C42;--green-bg:#EBF3EE;
+  --amber:#9A6E1A;--amber-bg:#FBF3E2;
+  --r:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{font-size:18px}
+body{font-family:'Noto Sans TC',sans-serif;background:var(--cream);color:var(--dark);min-height:100vh}
+
+/* TOP */
+.top{background:var(--dark);padding:20px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.top-title{color:#fff;font-size:22px;font-weight:700;letter-spacing:1px}
+.top-count{background:var(--brown-lt);color:#fff;font-size:16px;font-weight:700;padding:6px 18px;border-radius:20px}
+
+.wrap{max-width:900px;margin:0 auto;padding:24px 20px 60px}
+
+/* FILTER TABS */
+.filter-tabs{display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap}
+.ftab{padding:12px 24px;border:2px solid var(--bdr);border-radius:30px;background:#fff;font-size:16px;font-weight:500;cursor:pointer;transition:all .15s;color:var(--muted)}
+.ftab.on{background:var(--sage-dk);border-color:var(--sage-dk);color:#fff;font-weight:700}
+.ftab-count{background:rgba(255,255,255,.3);border-radius:10px;padding:1px 8px;font-size:13px;margin-left:4px}
+
+/* ORDER CARD */
+.order-card{background:#fff;border:2px solid var(--bdr);border-radius:var(--r);margin-bottom:20px;overflow:hidden;transition:border-color .2s}
+.order-card.done{border-color:#C0DD97;background:#F8FDF5}
+.order-card.done .order-head{background:var(--green-bg)}
+
+.order-head{background:var(--sand);padding:18px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;cursor:pointer;user-select:none}
+.order-head-left{flex:1;min-width:0}
+.order-num{font-size:14px;font-family:monospace;color:var(--muted);margin-bottom:4px}
+.order-customer{font-size:20px;font-weight:700;color:var(--dark)}
+.order-date{font-size:14px;color:var(--muted);margin-top:2px}
+.order-badge{padding:6px 16px;border-radius:20px;font-size:15px;font-weight:700;white-space:nowrap}
+.badge-pending{background:var(--amber-bg);color:var(--amber);border:1px solid #F0C060}
+.badge-confirmed{background:var(--green-bg);color:var(--sage-dk);border:1px solid #A8D5B8}
+.badge-done{background:#D3F9D8;color:#2B6B30;border:1px solid #A0D8A0}
+
+.check-all-btn{padding:10px 20px;background:var(--sage-dk);color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0}
+.check-all-btn.undone{background:var(--brown-lt)}
+
+/* ORDER ITEMS */
+.order-body{padding:20px}
+.order-summary{font-size:16px;color:var(--muted);margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--bdr)}
+.order-summary strong{color:var(--dark)}
+
+.item-list{display:flex;flex-direction:column;gap:16px}
+.item-row{display:flex;align-items:center;gap:16px;background:var(--cream);border-radius:12px;padding:14px;border:2px solid transparent;transition:all .2s}
+.item-row.checked{background:var(--green-bg);border-color:#A8D5B8}
+
+.item-img{width:90px;height:90px;border-radius:10px;object-fit:cover;background:var(--sand);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--muted);text-align:center;line-height:1.4}
+.item-img img{width:100%;height:100%;object-fit:cover;border-radius:10px}
+
+.item-info{flex:1;min-width:0}
+.item-name{font-size:18px;font-weight:700;line-height:1.35;margin-bottom:6px}
+.item-detail{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.item-size{background:var(--dark);color:#fff;font-size:14px;font-weight:700;padding:4px 12px;border-radius:6px}
+.item-qty{font-size:16px;color:var(--muted)}
+
+.item-check-btn{width:52px;height:52px;border-radius:50%;border:3px solid var(--bdr);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;font-size:24px}
+.item-check-btn.on{background:var(--green);border-color:var(--green);color:#fff}
+
+/* TOTAL SUMMARY */
+.total-card{background:#fff;border:2px solid var(--bdr);border-radius:var(--r);padding:20px 24px;margin-bottom:24px}
+.total-title{font-size:18px;font-weight:700;margin-bottom:14px;color:var(--dark)}
+.total-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--bdr);font-size:17px}
+.total-row:last-child{border-bottom:none;font-weight:700;font-size:19px;padding-top:14px}
+
+/* LOADING */
+.loading{text-align:center;padding:60px 20px;font-size:18px;color:var(--muted)}
+.loading-spinner{width:48px;height:48px;border:4px solid var(--warm);border-top-color:var(--sage-dk);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* EMPTY */
+.empty{text-align:center;padding:60px 20px;font-size:18px;color:var(--muted)}
+
+/* REFRESH BTN */
+.refresh-btn{display:block;margin:0 auto 24px;padding:14px 32px;background:#fff;border:2px solid var(--bdr);border-radius:12px;font-size:17px;font-weight:700;color:var(--muted);cursor:pointer;font-family:inherit;transition:all .15s}
+.refresh-btn:active{border-color:var(--sage-dk);color:var(--sage-dk)}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="top-title">📦 包貨核對</div>
+  <div class="top-count" id="topCount">載入中...</div>
+</div>
+
+<div class="wrap">
+  <button class="refresh-btn" onclick="loadOrders()">↻ 重新載入訂單</button>
+
+  <div class="filter-tabs">
+    <button class="ftab on" onclick="setFilter('all',this)">全部 <span class="ftab-count" id="cnt-all">0</span></button>
+    <button class="ftab" onclick="setFilter('confirmed',this)">已確認 <span class="ftab-count" id="cnt-confirmed">0</span></button>
+    <button class="ftab" onclick="setFilter('shipped',this)">待出貨 <span class="ftab-count" id="cnt-shipped">0</span></button>
+    <button class="ftab" onclick="setFilter('pending',this)">待確認 <span class="ftab-count" id="cnt-pending">0</span></button>
+  </div>
+
+  <div id="totalCard" style="display:none" class="total-card">
+    <div class="total-title">📊 本批包裹統計</div>
+    <div id="totalRows"></div>
+  </div>
+
+  <div id="ordersContainer">
+    <div class="loading"><div class="loading-spinner"></div>載入訂單中...</div>
+  </div>
+</div>
+
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwObvIYjmcIiv-RhTLR_0Ix5VQfameYtvomHmlrF4j3IXqYOpRGs2T15v8mfS5jecn3GA/exec";
+
+let allOrders = [];
+let allProducts = [];
+let currentFilter = 'all';
+let checkedItems = {}; // { orderId_itemIdx: true }
+
+async function loadOrders(){
+  document.getElementById('ordersContainer').innerHTML =
+    '<div class="loading"><div class="loading-spinner"></div>載入訂單中...</div>';
+
+  try {
+    const [ordRes, prodRes] = await Promise.all([
+      fetch(SCRIPT_URL + '?action=getOrders'),
+      fetch(SCRIPT_URL + '?action=getProducts')
+    ]);
+    const ordData = await ordRes.json();
+    const prodData = await prodRes.json();
+
+    if(ordData.ok) allOrders = ordData.orders;
+    if(prodData.ok) allProducts = prodData.products;
+
+    renderAll();
+  } catch(e) {
+    document.getElementById('ordersContainer').innerHTML =
+      '<div class="empty">無法連線，請確認網路並重新載入</div>';
+  }
+}
+
+function setFilter(filter, btn){
+  currentFilter = filter;
+  document.querySelectorAll('.ftab').forEach(t=>t.classList.remove('on'));
+  btn.classList.add('on');
+  renderAll();
+}
+
+function renderAll(){
+  updateCounts();
+  renderOrders();
+  renderTotalCard();
+}
+
+function updateCounts(){
+  const counts = {all:0, confirmed:0, shipped:0, pending:0};
+  allOrders.forEach(o=>{
+    counts.all++;
+    if(counts[o.status] !== undefined) counts[o.status]++;
+  });
+  Object.keys(counts).forEach(k=>{
+    const el = document.getElementById('cnt-'+k);
+    if(el) el.textContent = counts[k];
+  });
+  document.getElementById('topCount').textContent =
+    '共 ' + allOrders.length + ' 筆訂單';
+}
+
+function getProductImg(itemStr){
+  if(!itemStr) return '';
+  const name = itemStr.split('(')[0].trim();
+  const prod = allProducts.find(p => p.name === name || itemStr.includes(p.name));
+  return prod ? (prod.img_url || '') : '';
+}
+
+function renderOrders(){
+  const filtered = currentFilter === 'all'
+    ? allOrders
+    : allOrders.filter(o => o.status === currentFilter);
+
+  if(!filtered.length){
+    document.getElementById('ordersContainer').innerHTML =
+      '<div class="empty">此分類沒有訂單</div>';
+    return;
+  }
+
+  document.getElementById('ordersContainer').innerHTML = filtered.map((o, oi) => {
+    const oid = o.order_id || o.id || '';
+    const customer = o.line_name || o.line || '';
+    const date = o.timestamp || o.date || '';
+    const status = o.status || 'pending';
+    const items = parseItems(o.items || '');
+    const total = Number(o.total || 0);
+    const isDone = checkedItems[oid + '_done'];
+
+    const statusBadge = {
+      pending: '<span class="order-badge badge-pending">待確認</span>',
+      confirmed: '<span class="order-badge badge-confirmed">已確認</span>',
+      shipped: '<span class="order-badge badge-done">已出貨</span>',
+      done: '<span class="order-badge badge-done">完成</span>',
+    }[status] || '';
+
+    const allChecked = items.length > 0 && items.every((_,i) => checkedItems[oid+'_'+i]);
+
+    return `
+      <div class="order-card ${isDone||allChecked?'done':''}" id="oc-${oid}">
+        <div class="order-head" onclick="toggleCard('${oid}')">
+          <div class="order-head-left">
+            <div class="order-num">#${oid}</div>
+            <div class="order-customer">${customer}</div>
+            <div class="order-date">${date}</div>
+          </div>
+          ${statusBadge}
+          <button class="check-all-btn ${allChecked?'':'undone'}"
+            onclick="event.stopPropagation();checkAllItems('${oid}',${items.length})">
+            ${allChecked ? '✓ 已核對' : '全部核對'}
+          </button>
+        </div>
+        <div class="order-body" id="ob-${oid}">
+          <div class="order-summary">
+            共 <strong>${items.reduce((a,x)=>a+(x.qty||1),0)} 件商品</strong>・NT$${total.toLocaleString()}
+            ${o.note ? '・備註：' + o.note : ''}
+          </div>
+          <div class="item-list">
+            ${items.map((item, i) => {
+              const imgUrl = getProductImg(item.name);
+              const isChecked = !!checkedItems[oid+'_'+i];
+              return `
+                <div class="item-row ${isChecked?'checked':''}" id="ir-${oid}-${i}">
+                  <div class="item-img">
+                    ${imgUrl
+                      ? '<img src="'+imgUrl+'" alt="'+item.name+'" onerror="this.parentNode.innerHTML=\'暫無圖片\'">'
+                      : '暫無圖片'}
+                  </div>
+                  <div class="item-info">
+                    <div class="item-name">${item.name}</div>
+                    <div class="item-detail">
+                      ${item.size && item.size!=='—' ? '<span class="item-size">'+item.size+'</span>' : ''}
+                      <span class="item-qty">數量：${item.qty || 1} 件</span>
+                    </div>
+                  </div>
+                  <button class="item-check-btn ${isChecked?'on':''}"
+                    onclick="toggleItemCheck('${oid}',${i},${items.length})">
+                    ${isChecked ? '✓' : '○'}
+                  </button>
+                </div>`;
+            }).join('')}
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function parseItems(itemsStr){
+  if(!itemsStr) return [];
+  return itemsStr.split(',').map(s=>{
+    s = s.trim();
+    const qMatch = s.match(/x(\d+)$/);
+    const qty = qMatch ? parseInt(qMatch[1]) : 1;
+    const rest = qMatch ? s.slice(0, -qMatch[0].length) : s;
+    const sizeMatch = rest.match(/\(([^)]+)\)$/);
+    const size = sizeMatch ? sizeMatch[1] : '—';
+    const name = sizeMatch ? rest.slice(0, -sizeMatch[0].length).trim() : rest.trim();
+    return { name, size, qty };
+  });
+}
+
+function toggleCard(oid){
+  const body = document.getElementById('ob-'+oid);
+  if(!body) return;
+  body.style.display = body.style.display === 'none' ? 'block' : '';
+}
+
+function toggleItemCheck(oid, idx, total){
+  const key = oid + '_' + idx;
+  checkedItems[key] = !checkedItems[key];
+
+  const row = document.getElementById('ir-'+oid+'-'+idx);
+  const btn = row ? row.querySelector('.item-check-btn') : null;
+  if(row) row.classList.toggle('checked', checkedItems[key]);
+  if(btn){ btn.classList.toggle('on', checkedItems[key]); btn.textContent = checkedItems[key] ? '✓' : '○'; }
+
+  updateCardState(oid, total);
+}
+
+function checkAllItems(oid, total){
+  const allDone = Array.from({length:total},(_,i)=>checkedItems[oid+'_'+i]).every(Boolean);
+  for(let i=0;i<total;i++){
+    checkedItems[oid+'_'+i] = !allDone;
+    const row = document.getElementById('ir-'+oid+'-'+i);
+    const btn = row ? row.querySelector('.item-check-btn') : null;
+    if(row) row.classList.toggle('checked', !allDone);
+    if(btn){ btn.classList.toggle('on', !allDone); btn.textContent = !allDone ? '✓' : '○'; }
+  }
+  updateCardState(oid, total);
+}
+
+function updateCardState(oid, total){
+  const card = document.getElementById('oc-'+oid);
+  const checkBtn = card ? card.querySelector('.check-all-btn') : null;
+  const allChecked = Array.from({length:total},(_,i)=>checkedItems[oid+'_'+i]).every(Boolean);
+  if(card) card.classList.toggle('done', allChecked);
+  if(checkBtn){
+    checkBtn.classList.toggle('undone', !allChecked);
+    checkBtn.textContent = allChecked ? '✓ 已核對' : '全部核對';
+  }
+}
+
+function renderTotalCard(){
+  const relevant = currentFilter === 'all' ? allOrders : allOrders.filter(o=>o.status===currentFilter);
+  if(!relevant.length){ document.getElementById('totalCard').style.display='none'; return; }
+
+  const itemCounts = {};
+  relevant.forEach(o=>{
+    parseItems(o.items||'').forEach(item=>{
+      const key = item.name + (item.size&&item.size!=='—' ? '（'+item.size+'）' : '');
+      itemCounts[key] = (itemCounts[key]||0) + (item.qty||1);
+    });
+  });
+
+  const rows = Object.entries(itemCounts)
+    .sort((a,b)=>b[1]-a[1])
+    .map(([k,v])=>`
+      <div class="total-row">
+        <span>${k}</span>
+        <strong>${v} 件</strong>
+      </div>`).join('');
+
+  const totalQty = Object.values(itemCounts).reduce((a,b)=>a+b,0);
+  document.getElementById('totalRows').innerHTML = rows +
+    `<div class="total-row"><span>合計</span><strong>${totalQty} 件</strong></div>`;
+  document.getElementById('totalCard').style.display = 'block';
+}
+
+loadOrders();
+</script>
+</body>
+</html>
