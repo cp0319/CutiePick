@@ -150,6 +150,13 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream);color:var(--d
       <span class="img-status-txt" id="imgStatusTxt">尚未選擇圖片</span>
       <button class="img-retry-btn" id="imgRetryBtn" onclick="retryUpload()">重試</button>
     </div>
+    <div id="manualUrlSection" style="display:none;padding:10px 14px;border-top:1px solid var(--bdr);background:var(--sage-pale)">
+      <div style="font-size:12px;color:var(--sage-dk);margin-bottom:8px;font-family:'Nunito',sans-serif;font-weight:700">請上傳到 Google Drive 後貼上圖片連結：</div>
+      <div style="display:flex;gap:8px">
+        <input class="finput" id="manualUrlInput" placeholder="貼上 Drive 圖片連結" style="font-size:13px;padding:8px 10px"/>
+        <button style="padding:8px 14px;background:var(--sage-dk);color:#fff;border:none;border-radius:8px;font-size:12px;font-family:Nunito,sans-serif;font-weight:700;cursor:pointer;white-space:nowrap" onclick="applyManualUrl()">套用</button>
+      </div>
+    </div>
   </div>
 
   <!-- 品牌 -->
@@ -334,37 +341,43 @@ async function uploadToDrive(file){
 
   try {
     const base64 = await fileToBase64(file);
-
-    // Apps Script 需要用 no-cors，但無法接收回應
-    // 改用 Google Apps Script 的 jsonp 方式或分兩步驟
-    // 方法：先用 FormData POST，Apps Script 回傳 JSON
-    const res = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        action: 'uploadImage',
-        imageData: base64,
-        mimeType: file.type,
-        filename: 'cp_' + Date.now() + '.' + (file.name.split('.').pop() || 'jpg')
-      })
+    const payload = JSON.stringify({
+      action: 'uploadImage',
+      imageData: base64,
+      mimeType: file.type,
+      filename: 'cp_' + Date.now() + '.' + (file.name.split('.').pop() || 'jpg')
     });
 
-    // Apps Script 有時回傳不是 JSON，先確認
-    const text = await res.text();
-    let data;
-    try { data = JSON.parse(text); }
-    catch(e) { throw new Error('回應格式錯誤：' + text.slice(0,100)); }
+    const result = await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', SCRIPT_URL, true);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.onload = function(){
+        try {
+          const d = JSON.parse(xhr.responseText);
+          if(d.ok) resolve(d.url);
+          else reject(new Error(d.error || '上傳失敗'));
+        } catch(e) { reject(new Error('回應格式錯誤')); }
+      };
+      xhr.onerror = function(){ reject(new Error('CORS_BLOCKED')); };
+      xhr.ontimeout = function(){ reject(new Error('連線逾時')); };
+      xhr.timeout = 30000;
+      xhr.send(payload);
+    });
 
-    if(data.ok){
-      uploadedImgUrl = data.url;
-      setImgStatus('ok', '✓ 已上傳到 Google Drive');
-    } else {
-      throw new Error(data.error || '上傳失敗');
-    }
+    uploadedImgUrl = result;
+    setImgStatus('ok', '✓ 已上傳到 Google Drive');
+
   } catch(e) {
-    console.error('Upload error:', e);
-    setImgStatus('err', '上傳失敗：' + (e.message||'請點重試'));
-    document.getElementById('imgRetryBtn').style.display = 'block';
+    console.error('Upload error:', e.message);
+    if(e.message === 'CORS_BLOCKED'){
+      setImgStatus('err', '請用下方手動貼入圖片連結');
+      document.getElementById('manualUrlSection').style.display = 'block';
+      document.getElementById('imgRetryBtn').style.display = 'none';
+    } else {
+      setImgStatus('err', e.message || '上傳失敗，請重試');
+      document.getElementById('imgRetryBtn').style.display = 'block';
+    }
   }
 
   document.getElementById('uploadingOverlay').classList.remove('show');
@@ -374,6 +387,18 @@ async function retryUpload(){
   if(!pendingFile) return;
   document.getElementById('imgRetryBtn').style.display = 'none';
   await uploadToDrive(pendingFile);
+}
+
+function applyManualUrl(){
+  let url = document.getElementById('manualUrlInput').value.trim();
+  if(!url) return;
+  const driveD = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  if(driveD) url = 'https://drive.google.com/thumbnail?id=' + driveD[1] + '&sz=w800';
+  const driveUc = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if(driveUc && url.includes('uc?')) url = 'https://drive.google.com/thumbnail?id=' + driveUc[1] + '&sz=w800';
+  uploadedImgUrl = url;
+  showPreview(url);
+  setImgStatus('ok', '✓ 圖片連結已套用');
 }
 
 function fileToBase64(file){
