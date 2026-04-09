@@ -313,6 +313,11 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream);color:var(--d
         <strong>② 搜尋官方帳號：@892tzgju</strong><br>
         <strong>③ 貼上訊息（Ctrl+V）並傳送</strong>
       </div>
+
+      <!-- 關閉按鈕 -->
+      <button onclick="closeSuccess()" style="display:block;width:100%;margin-top:14px;padding:13px;border:1.5px solid var(--bdr);border-radius:12px;background:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;color:var(--muted);cursor:pointer;">
+        關閉，回到商品頁面
+      </button>
     </div>
   </div>
 </div>
@@ -540,6 +545,21 @@ function showDesktopHint(){
   document.getElementById('desktopHint').style.display = 'block';
   document.getElementById('lineJumpBtn').textContent = '✓ 訊息已複製！';
   document.getElementById('lineJumpBtn').style.background = '#059C42';
+}
+
+function closeSuccess(){
+  document.getElementById('successMo').classList.remove('open');
+  document.body.style.overflow = '';
+  // 重置表單
+  cart = []; sels = []; uid = 0;
+  renderCart();
+  document.getElementById('lineName').value = '';
+  document.getElementById('note').value = '';
+  document.getElementById('lineJumpBtn').textContent = '確認下標，傳送訂單明細至官方 LINE';
+  document.getElementById('lineJumpBtn').style.background = '#06C755';
+  document.getElementById('desktopHint').style.display = 'none';
+  document.getElementById('fab').style.display = 'none';
+  addSelector();
 }
 
 function toast(msg){
