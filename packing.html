@@ -85,6 +85,14 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream);color:var(--d
 /* EMPTY */
 .empty{text-align:center;padding:60px 20px;font-size:18px;color:var(--muted)}
 
+/* STATUS BTNS */
+.status-btns{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+.status-btn{padding:12px 20px;border:2px solid var(--bdr);border-radius:12px;background:#fff;font-size:16px;font-weight:700;color:var(--muted);cursor:pointer;font-family:inherit;transition:all .15s;flex:1;text-align:center;min-width:120px}
+.status-btn:active{transform:scale(.96)}
+.status-btn.confirm{border-color:#A8D5B8;background:var(--green-bg);color:var(--sage-dk)}
+.status-btn.ship{border-color:#B5D4F4;background:#E6F1FB;color:#185FA5}
+.status-btn.done-btn{border-color:#C0DD97;background:#D3F9D8;color:#2B6B30}
+
 /* REFRESH BTN */
 .refresh-btn{display:block;margin:0 auto 24px;padding:14px 32px;background:#fff;border:2px solid var(--bdr);border-radius:12px;font-size:17px;font-weight:700;color:var(--muted);cursor:pointer;font-family:inherit;transition:all .15s}
 .refresh-btn:active{border-color:var(--sage-dk);color:var(--sage-dk)}
@@ -196,7 +204,9 @@ function renderOrders(){
     const oid = o.order_id || o.id || '';
     const customer = o.line_name || o.line || '';
     const date = o.timestamp || o.date || '';
-    const status = o.status || 'pending';
+    const statusRaw = o.status || '';
+    const sm2 = {'待確認':'pending','已確認':'confirmed','已出貨':'shipped','完成':'done'};
+    const status = sm2[statusRaw] || statusRaw || 'pending';
     const items = parseItems(o.items || '');
     const total = Number(o.total || 0);
     const isDone = checkedItems[oid + '_done'];
@@ -311,6 +321,24 @@ function updateCardState(oid, total){
   if(checkBtn){
     checkBtn.classList.toggle('undone', !allChecked);
     checkBtn.textContent = allChecked ? '✓ 已核對' : '全部核對';
+  }
+}
+
+async function updateStatus(oid, newStatus){
+  // 先更新本地
+  const o = allOrders.find(x => (x.order_id||x.id) === oid);
+  if(o) o.status = newStatus;
+  renderAll();
+
+  // 同步到 Sheets
+  try {
+    await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({action:'updateOrderStatus', order_id: oid, status: newStatus})
+    });
+  } catch(e) {
+    console.error('Status update failed:', e);
   }
 }
 
