@@ -420,14 +420,29 @@ function prevImgUrl(inputId, previewId){
   const url = document.getElementById(inputId).value.trim();
   const preview = document.getElementById(previewId);
   if(!url){ preview.innerHTML='預覽'; return; }
-  // 處理 Google Drive 分享連結 → 轉成直接圖片連結
+
   let imgUrl = url;
+
+  // Google Drive 分享連結轉換
   const driveMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
   if(driveMatch){
-    imgUrl = 'https://drive.google.com/uc?export=view&id=' + driveMatch[1];
+    // 用 thumbnail 格式，瀏覽器不會擋
+    imgUrl = 'https://drive.google.com/thumbnail?id=' + driveMatch[1] + '&sz=w400';
     document.getElementById(inputId).value = imgUrl;
   }
-  preview.innerHTML = '<img src="' + imgUrl + '" style="width:100%;height:100%;object-fit:cover" onerror="this.parentNode.innerHTML=\'圖片載入失敗\'">';
+
+  // uc?export=view 也轉成 thumbnail
+  const ucMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if(ucMatch && url.includes('drive.google.com/uc')){
+    imgUrl = 'https://drive.google.com/thumbnail?id=' + ucMatch[1] + '&sz=w400';
+    document.getElementById(inputId).value = imgUrl;
+  }
+
+  const img = document.createElement('img');
+  img.style.cssText = 'width:100%;height:100%;object-fit:cover';
+  img.onerror = function(){ preview.innerHTML = '<span style="font-size:11px;color:var(--muted)">無法預覽<br>但連結可用</span>'; };
+  img.onload = function(){ preview.innerHTML = ''; preview.appendChild(img); };
+  img.src = imgUrl;
 }
 
 // ── 自動編號 ──
@@ -590,8 +605,11 @@ function renderOrders(){
     const date = o.timestamp || o.date || '';
     const items = o.items || '';
     const total = o.total || 0;
-    const status = o.status || 'pending';
-    const s = SM[status] || {l: status, c: 'sp-p'};
+    // 處理中文狀態（Sheets 可能存中文或英文）
+    const statusRaw = o.status || '';
+    const statusMap = {'待確認':'pending','已確認':'confirmed','已出貨':'shipped','完成':'done'};
+    const status = statusMap[statusRaw] || statusRaw || 'pending';
+    const s = SM[status] || {l: statusRaw || '待確認', c: 'sp-p'};
     const nxt = NS[status];
     return '<tr>' +
       '<td class="oid">#' + oid + '</td>' +
@@ -608,8 +626,15 @@ function renderOrders(){
   }).join('') : '<tr><td colspan="7" class="empty">尚無訂單</td></tr>';
 
   document.getElementById('stTotal').textContent = orders.length;
-  document.getElementById('stPending').textContent = orders.filter(o => o.status === 'pending' || !o.status).length;
-  document.getElementById('stShipped').textContent = orders.filter(o => o.status === 'shipped').length;
+  const statusMap2 = {'待確認':'pending','已確認':'confirmed','已出貨':'shipped','完成':'done'};
+  document.getElementById('stPending').textContent = orders.filter(o => {
+    const st = statusMap2[o.status] || o.status || 'pending';
+    return st === 'pending';
+  }).length;
+  document.getElementById('stShipped').textContent = orders.filter(o => {
+    const st = statusMap2[o.status] || o.status || '';
+    return st === 'shipped';
+  }).length;
   const rev = orders.reduce((a,o) => a + Number(o.total||0), 0);
   document.getElementById('stRevenue').textContent = '$' + rev.toLocaleString();
   document.getElementById('stFee').textContent = '';
