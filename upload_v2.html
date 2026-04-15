@@ -16,9 +16,34 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:'Noto Sans TC',sans-serif;background:var(--cream);color:var(--dark);min-height:100vh;padding-bottom:100px}
 
-.topbar{background:var(--dark);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
-.topbar-title{font-family:'Nunito',sans-serif;color:#fff;font-size:16px;font-weight:800}
+.topbar{background:var(--dark);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;gap:8px}
+.topbar-title{font-family:'Nunito',sans-serif;color:#fff;font-size:16px;font-weight:800;flex-shrink:0}
 .topbar-id{font-family:monospace;font-size:12px;color:rgba(255,255,255,.5);background:rgba(255,255,255,.1);padding:3px 10px;border-radius:10px}
+.top-tab{padding:5px 12px;border:1.5px solid rgba(255,255,255,.2);border-radius:16px;background:transparent;color:rgba(255,255,255,.6);font-size:12px;font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer;transition:all .15s;white-space:nowrap}
+.top-tab.on{background:var(--sage-dk);border-color:var(--sage-dk);color:#fff}
+.sh-page{display:none;padding:1rem;max-width:520px;margin:0 auto;padding-bottom:40px}
+.sh-page.show{display:block}
+.sh-filter-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem}
+.sh-ftag{padding:6px 14px;border:1.5px solid var(--bdr);border-radius:16px;font-size:13px;cursor:pointer;background:#fff;font-family:'Nunito',sans-serif;font-weight:600;color:var(--muted);transition:all .15s;user-select:none}
+.sh-ftag.on{background:var(--sage-dk);border-color:var(--sage-dk);color:#fff}
+.sh-brand-box{background:#fff;border:1.5px solid var(--bdr);border-radius:var(--r);margin-bottom:10px;overflow:hidden}
+.sh-brand-hd{background:var(--sand);padding:12px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+.sh-brand-name{font-size:15px;font-weight:700;font-family:'Nunito',sans-serif}
+.sh-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--bdr)}
+.sh-item:last-child{border-bottom:none}
+.sh-item.bought{background:var(--sage-pale)}
+.sh-chk{width:26px;height:26px;border:2px solid var(--bdr);border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;font-weight:800;transition:all .15s}
+.sh-chk.on{background:var(--green);border-color:var(--green);color:#fff}
+.sh-sz{background:var(--dark);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;flex-shrink:0}
+.sh-sz.done{background:var(--muted)}
+.sh-iname{flex:1;font-size:14px;font-weight:500;line-height:1.35}
+.sh-iname.done{color:var(--muted);text-decoration:line-through;font-weight:400}
+.sh-iqty{font-size:18px;font-weight:800;color:var(--brown);font-family:'Nunito',sans-serif;white-space:nowrap}
+.sh-iqty.done{color:var(--muted)}
+.sh-stat-row{display:flex;gap:16px;background:var(--sage-pale);border:1px solid #C8DDD6;border-radius:var(--r);padding:12px 14px;margin-bottom:1rem;flex-wrap:wrap}
+.sh-stat{text-align:center}
+.sh-stat-n{font-size:20px;font-weight:800;color:var(--sage-dk);font-family:'Nunito',sans-serif}
+.sh-stat-l{font-size:10px;color:var(--sage);font-family:'Nunito',sans-serif}
 
 .wrap{max-width:520px;margin:0 auto;padding:1.25rem 1rem}
 
@@ -120,10 +145,15 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream);color:var(--d
 <body>
 
 <div class="topbar">
-  <div class="topbar-title">⚡ 快速上架</div>
-  <div class="topbar-id" id="topbarId">A01</div>
+  <div class="topbar-title" id="topbarTitle">⚡ 快速上架</div>
+  <div style="display:flex;gap:6px;align-items:center">
+    <button class="top-tab on" id="tt-upload" onclick="switchTab('upload')">上架</button>
+    <button class="top-tab" id="tt-shopping" onclick="switchTab('shopping')">採購</button>
+    <div class="topbar-id" id="topbarId" style="margin-left:4px">A01</div>
+  </div>
 </div>
 
+<div class="upload-page" id="uploadPage">
 <div class="wrap">
   <div class="success-bar" id="successBar">
     <span>✓ 上架成功！繼續上架下一件</span>
@@ -131,14 +161,14 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream);color:var(--d
   </div>
 
   <!-- 圖片 -->
-  <div class="sec-lbl">商品照片</div>
+  <div class="sec-lbl">商品照片（選填，可稍後從電腦版補上）</div>
   <div class="img-upload-box">
     <div class="img-tap-area" id="imgTapArea">
       <input type="file" accept="image/*" capture="environment" id="imgFileInput" onchange="handlePhoto(this)">
       <div class="img-placeholder" id="imgPlaceholder">
         <span class="img-ph-icon">📷</span>
         <div class="img-ph-txt">點擊拍照或選擇照片</div>
-        <div class="img-ph-sub">照片將自動上傳到 Google Drive</div>
+        <div class="img-ph-sub">可先跳過，稍後從電腦版補圖</div>
       </div>
       <div class="uploading-overlay" id="uploadingOverlay">
         <div class="upload-spinner"></div>
@@ -271,10 +301,31 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream);color:var(--d
 
 </div>
 
-<div class="submit-area">
+<div class="submit-area" id="submitArea">
   <button class="submit-btn" id="submitBtn" onclick="submitProduct()">
     ＋ 新增並同步 Sheets
   </button>
+</div>
+</div><!-- /upload-page -->
+
+<!-- 採購清單頁 -->
+<div class="sh-page" id="shPage">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
+    <div style="font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;color:var(--dark)">採購清單</div>
+    <button onclick="loadShoppingMobile()" style="padding:6px 14px;border:1.5px solid var(--bdr);border-radius:8px;background:#fff;font-size:12px;font-family:'Nunito',sans-serif;font-weight:700;color:var(--muted);cursor:pointer">↻ 重新整理</button>
+  </div>
+  <div class="sh-filter-row">
+    <span style="font-size:11px;color:var(--muted);align-self:center;font-family:'Nunito',sans-serif">納入：</span>
+    <div class="sh-ftag on" id="mft-pending" onclick="toggleMFilter('pending',this)">待確認</div>
+    <div class="sh-ftag on" id="mft-confirmed" onclick="toggleMFilter('confirmed',this)">已確認</div>
+    <div class="sh-ftag" id="mft-shipped" onclick="toggleMFilter('shipped',this)">已出貨</div>
+  </div>
+  <div id="shStatRowMobile" style="display:none" class="sh-stat-row">
+    <div class="sh-stat"><div class="sh-stat-n" id="mshOrders">0</div><div class="sh-stat-l">筆訂單</div></div>
+    <div class="sh-stat"><div class="sh-stat-n" id="mshItems">0</div><div class="sh-stat-l">樣商品</div></div>
+    <div class="sh-stat"><div class="sh-stat-n" id="mshQty">0</div><div class="sh-stat-l">件合計</div></div>
+  </div>
+  <div id="shMobileContainer"><div style="text-align:center;padding:3rem;color:var(--muted)">載入中...</div></div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -292,6 +343,159 @@ let uploadedImgUrl = '';
 let pendingFile = null;
 let lastSizes = JSON.parse(localStorage.getItem('cp_last_sizes') || '[]');
 let productCount = JSON.parse(localStorage.getItem('cp_counts') || '{"A":0,"C":0,"D":0,"E":0}');
+
+// ════ 頁籤切換 ════
+let currentTab = 'upload';
+function switchTab(tab){
+  currentTab = tab;
+  document.getElementById('uploadPage').style.display = tab==='upload' ? '' : 'none';
+  document.getElementById('shPage').classList.toggle('show', tab==='shopping');
+  document.getElementById('submitArea') && (document.getElementById('submitArea').style.display = tab==='upload' ? '' : 'none');
+  document.getElementById('tt-upload').classList.toggle('on', tab==='upload');
+  document.getElementById('tt-shopping').classList.toggle('on', tab==='shopping');
+  document.getElementById('topbarId').style.display = tab==='upload' ? '' : 'none';
+  if(tab==='shopping') loadShoppingMobile();
+}
+
+// ════ 手機採購清單 ════
+let mshOrders = [];
+let mshFilters = new Set(['pending','confirmed']);
+let mshBought = new Set(JSON.parse(localStorage.getItem('cp_mobile_bought') || '[]'));
+
+function toggleMFilter(status, el){
+  if(mshFilters.has(status)){ if(mshFilters.size===1) return; mshFilters.delete(status); el.classList.remove('on'); }
+  else { mshFilters.add(status); el.classList.add('on'); }
+  renderShoppingMobile();
+}
+
+async function loadShoppingMobile(){
+  document.getElementById('shMobileContainer').innerHTML =
+    '<div style="text-align:center;padding:3rem;color:var(--muted)">載入中...</div>';
+  try {
+    const res = await fetch(SCRIPT_URL + '?action=getOrders');
+    const data = await res.json();
+    if(data.ok){ mshOrders = data.orders; renderShoppingMobile(); }
+    else { document.getElementById('shMobileContainer').innerHTML = '<div style="text-align:center;padding:3rem;color:var(--muted)">載入失敗</div>'; }
+  } catch(e) {
+    document.getElementById('shMobileContainer').innerHTML = '<div style="text-align:center;padding:3rem;color:var(--muted)">無法連線</div>';
+  }
+}
+
+function mNormStatus(s){ return {'待確認':'pending','已確認':'confirmed','已出貨':'shipped','完成':'done'}[s]||s||'pending'; }
+function mParseItems(str){
+  if(!str) return [];
+  return str.split(',').map(s => {
+    s=s.trim();
+    const qm=s.match(/x(\d+)$/); const qty=qm?parseInt(qm[1]):1;
+    const rest=qm?s.slice(0,-qm[0].length):s;
+    const sm=rest.match(/\(([^)]+)\)$/);
+    return {name:sm?rest.slice(0,-sm[0].length).trim():rest.trim(), size:sm?sm[1]:'—', qty};
+  });
+}
+const M_BRANDS=['Polo Ralph Lauren','Nike','Jordan','Tommy Hilfiger','Calvin Klein',"Levi's","Carter's",'Barefoot Dreams','Angel Dear','Hanna Andersson'];
+function mGetBrand(name){ for(const b of M_BRANDS){ if(name.startsWith(b)) return b; } return name.split(' ')[0]||'其他'; }
+
+function renderShoppingMobile(){
+  const filtered = mshOrders.filter(o => mshFilters.has(mNormStatus(o.status)));
+  const statRow = document.getElementById('shStatRowMobile');
+
+  if(!filtered.length){
+    document.getElementById('shMobileContainer').innerHTML =
+      '<div style="text-align:center;padding:3rem;color:var(--muted);font-size:14px">目前沒有符合條件的訂單</div>';
+    statRow.style.display='none'; return;
+  }
+
+  const itemMap = {};
+  filtered.forEach(o => {
+    const customer = o.line_name||o.line||'';
+    mParseItems(o.items||'').forEach(item => {
+      const key = item.name+'__'+item.size;
+      if(!itemMap[key]) itemMap[key]={brand:mGetBrand(item.name),name:item.name,size:item.size,qty:0,orders:[]};
+      itemMap[key].qty+=item.qty;
+      itemMap[key].orders.push({customer,qty:item.qty});
+    });
+  });
+
+  const totalItems=Object.keys(itemMap).length;
+  const totalQty=Object.values(itemMap).reduce((a,x)=>a+x.qty,0);
+  document.getElementById('mshOrders').textContent=filtered.length;
+  document.getElementById('mshItems').textContent=totalItems;
+  document.getElementById('mshQty').textContent=totalQty;
+  statRow.style.display='flex';
+
+  const brandMap={};
+  Object.entries(itemMap).forEach(([key,item])=>{
+    if(!brandMap[item.brand]) brandMap[item.brand]=[];
+    brandMap[item.brand].push({key,...item});
+  });
+
+  const container = document.getElementById('shMobileContainer');
+  container.innerHTML = '';
+
+  Object.keys(brandMap).sort().forEach(brand => {
+    const items = brandMap[brand].sort((a,b)=>a.name.localeCompare(b.name)||a.size.localeCompare(b.size));
+    const brandQty = items.reduce((a,x)=>a+x.qty,0);
+
+    const box = document.createElement('div');
+    box.className = 'sh-brand-box';
+
+    const hd = document.createElement('div');
+    hd.className = 'sh-brand-hd';
+    hd.innerHTML = '<span class="sh-brand-name">' + brand + '</span>' +
+      '<span style="font-size:12px;color:var(--muted)">' + items.length + '樣・' + brandQty + '件</span>';
+    hd.addEventListener('click', function(){ toggleShBrand(this); });
+
+    const body = document.createElement('div');
+
+    items.forEach(item => {
+      const bought = mshBought.has(item.key);
+      const row = document.createElement('div');
+      row.className = 'sh-item' + (bought ? ' bought' : '');
+
+      const chk = document.createElement('div');
+      chk.className = 'sh-chk' + (bought ? ' on' : '');
+      chk.textContent = bought ? '✓' : '';
+      chk.addEventListener('click', (function(k){ return function(){ mshToggle(k); }; })(item.key));
+
+      const sz = document.createElement('span');
+      sz.className = 'sh-sz' + (bought ? ' done' : '');
+      sz.textContent = item.size !== '—' ? item.size : '無';
+
+      const info = document.createElement('div');
+      info.style.cssText = 'flex:1;min-width:0';
+      const nm = document.createElement('div');
+      nm.className = 'sh-iname' + (bought ? ' done' : '');
+      nm.textContent = item.name;
+      const sub = document.createElement('div');
+      sub.style.cssText = 'font-size:11px;color:var(--muted)';
+      sub.textContent = item.orders.map(o=>o.customer+'×'+o.qty).join('・');
+      info.appendChild(nm);
+      info.appendChild(sub);
+
+      const qty = document.createElement('div');
+      qty.className = 'sh-iqty' + (bought ? ' done' : '');
+      qty.textContent = item.qty + ' 件';
+
+      row.appendChild(chk);
+      row.appendChild(sz);
+      row.appendChild(info);
+      row.appendChild(qty);
+      body.appendChild(row);
+    });
+
+    box.appendChild(hd);
+    box.appendChild(body);
+    container.appendChild(box);
+  });
+}
+
+function mshToggle(key){
+  if(mshBought.has(key)) mshBought.delete(key); else mshBought.add(key);
+  localStorage.setItem('cp_mobile_bought', JSON.stringify([...mshBought]));
+  renderShoppingMobile();
+}
+
+// ════ END 採購清單 ════
 
 function init(){
   renderSzTable();
@@ -539,7 +743,6 @@ async function submitProduct(){
   const price = parseInt(document.getElementById('priceInput').value);
   const { sizes, sizesStock } = getSizesAndStock();
 
-  if(!uploadedImgUrl){ toast('請先上傳商品照片'); return; }
   if(!name || !document.getElementById('nameInput').value.trim()){ toast('請填寫商品名稱'); return; }
   if(!price || price <= 0){ toast('請填寫售價'); return; }
 
