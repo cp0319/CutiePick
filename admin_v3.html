@@ -113,6 +113,15 @@ tr:hover td{background:var(--bg)}
 .sh-item-row{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--bdr);transition:background .15s}
 .sh-item-row:last-child{border-bottom:none}
 .sh-item-row.bought{background:var(--gbg)}
+.sh-thumb{width:48px;height:48px;border-radius:7px;background:var(--sand);object-fit:cover;flex-shrink:0;cursor:pointer;transition:opacity .15s}
+.sh-thumb:hover{opacity:.85}
+.sh-thumb-placeholder{width:48px;height:48px;border-radius:7px;background:var(--sand);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--muted)}
+.sh-img-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;align-items:center;justify-content:center;padding:16px}
+.sh-img-modal.open{display:flex;animation:shFade .2s ease}
+@keyframes shFade{from{opacity:0}to{opacity:1}}
+.sh-img-modal-inner{position:relative;max-width:88vw;max-height:88vh}
+.sh-img-modal img{max-width:88vw;max-height:80vh;object-fit:contain;border-radius:12px;display:block}
+.sh-img-modal-close{position:absolute;top:-18px;right:-18px;width:40px;height:40px;background:#fff;border:none;border-radius:50%;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--dark);box-shadow:0 2px 8px rgba(0,0,0,.3);line-height:1}
 .sh-check{width:20px;height:20px;border:2px solid var(--bdr);border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;background:#fff;font-size:11px;font-weight:800}
 .sh-check.on{background:var(--green);border-color:var(--green);color:#fff}
 .sh-name{flex:1;font-size:13px;font-weight:500}
@@ -304,6 +313,14 @@ tr:hover td{background:var(--bg)}
   </div>
 
   <div id="shContainer"><div style="text-align:center;padding:3rem;color:var(--muted)">切換到此頁籤後自動載入</div></div>
+</div>
+
+<!-- 圖片放大 Modal（採購清單用）-->
+<div class="sh-img-modal" id="shImgModal" onclick="closeShImg(event)">
+  <div class="sh-img-modal-inner">
+    <button class="sh-img-modal-close" onclick="closeShImg()">×</button>
+    <img id="shImgSrc" src="" alt="">
+  </div>
 </div>
 
 <!-- 編輯 Modal -->
@@ -503,6 +520,25 @@ function renderShopping(){
       chk.textContent = bought ? '✓' : '';
       chk.addEventListener('click', (function(k){ return function(){ shToggle(k); }; })(item.key));
 
+      // 找商品圖片
+      const prodData = (typeof products !== 'undefined' ? products : []).find(p => p.name === item.name);
+      const imgUrl = prodData ? (prodData.img_url || '') : '';
+      if(imgUrl){
+        const thumb = document.createElement('img');
+        thumb.className = 'sh-thumb';
+        thumb.src = imgUrl;
+        thumb.alt = item.name;
+        thumb.title = '點擊放大';
+        thumb.addEventListener('click', (function(u){ return function(){ openShImg(u); }; })(imgUrl));
+        thumb.onerror = function(){ this.style.display='none'; };
+        row.appendChild(thumb);
+      } else {
+        const ph = document.createElement('div');
+        ph.className = 'sh-thumb-placeholder';
+        ph.textContent = '無圖';
+        row.appendChild(ph);
+      }
+
       const info = document.createElement('div');
       info.style.cssText = 'flex:1;min-width:0';
       const sizeTag = document.createElement('span');
@@ -539,6 +575,17 @@ function shToggle(key){
   else shBought.add(key);
   localStorage.setItem('cp_admin_bought', JSON.stringify([...shBought]));
   renderShopping();
+}
+
+function openShImg(url){
+  document.getElementById('shImgSrc').src = url;
+  document.getElementById('shImgModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeShImg(e){
+  if(e && e.target !== document.getElementById('shImgModal') && !e.target.classList.contains('sh-img-modal-close')) return;
+  document.getElementById('shImgModal').classList.remove('open');
+  document.body.style.overflow = '';
 }
 
 // ════════════ END 採購清單 ════════════
