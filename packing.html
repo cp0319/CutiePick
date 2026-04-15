@@ -369,6 +369,25 @@ function renderTotalCard(){
 }
 
 loadOrders();
+
+function openImgModal(url){
+  document.getElementById('imgModalSrc').src = url;
+  document.getElementById('imgModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeImgModal(e){
+  if(e && e.target !== document.getElementById('imgModal') && !e.target.classList.contains('img-modal-close')) return;
+  document.getElementById('imgModal').classList.remove('open');
+  document.body.style.overflow = '';
+  document.getElementById('imgModalSrc').src = '';
+}
 </script>
+<!-- 圖片放大 Modal -->
+<div class="img-modal" id="imgModal" onclick="closeImgModal(event)">
+  <div class="img-modal-inner">
+    <button class="img-modal-close" onclick="closeImgModal()">×</button>
+    <img id="imgModalSrc" src="" alt="商品圖片">
+  </div>
+</div>
 </body>
 </html>
