@@ -105,6 +105,28 @@ tr:hover td{background:var(--bg)}
 .sp-c{background:var(--gbg);color:var(--green)}
 .sp-s{background:var(--bbg);color:var(--blue)}
 .sp-d{background:var(--sand);color:var(--muted)}
+.status-sel{padding:5px 8px;border:1px solid var(--bdr);border-radius:6px;font-size:12px;font-family:inherit;outline:none;background:var(--sur);color:var(--dark);cursor:pointer}
+.status-sel:focus{border-color:var(--acc)}
+.sh-ft.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.sh-brand-hd{background:var(--sand);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;border-bottom:1px solid var(--bdr);user-select:none}
+.sh-brand-name{font-size:14px;font-weight:500}
+.sh-item-row{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--bdr);transition:background .15s}
+.sh-item-row:last-child{border-bottom:none}
+.sh-item-row.bought{background:var(--gbg)}
+.sh-check{width:20px;height:20px;border:2px solid var(--bdr);border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;background:#fff;font-size:11px;font-weight:800}
+.sh-check.on{background:var(--green);border-color:var(--green);color:#fff}
+.sh-name{flex:1;font-size:13px;font-weight:500}
+.sh-name.done{text-decoration:line-through;color:var(--muted);font-weight:400}
+.sh-size{background:var(--dark);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:3px;margin-right:6px}
+.sh-size.done{background:var(--muted)}
+.sh-qty{font-size:16px;font-weight:500;color:var(--acc-dk);white-space:nowrap}
+.sh-qty.done{color:var(--muted)}
+@media print{
+  .nav,.sh-ft,button{display:none!important}
+  .sh-item-row.bought{display:none!important}
+  #p0,#p1{display:none!important}
+  #p2{display:block!important}
+}
 .tdacts{display:flex;gap:5px;flex-wrap:wrap}
 .empty{text-align:center;padding:3rem;color:var(--muted);font-size:14px}
 .oid{font-family:monospace;font-size:11px;color:var(--muted)}
@@ -132,6 +154,7 @@ tr:hover td{background:var(--bg)}
   <div class="nav-tabs">
     <button class="ntab on" onclick="sw(0)">商品管理</button>
     <button class="ntab" onclick="sw(1)">訂單管理</button>
+    <button class="ntab" onclick="sw(2)">採購清單</button>
   </div>
   <div class="nav-right">
     <div class="sync-status"><div class="sync-dot" id="syncDot"></div><span id="syncTxt">已連線</span></div>
@@ -248,6 +271,41 @@ tr:hover td{background:var(--bg)}
   </div>
 </div>
 
+<!-- ════════════ 採購清單 ════════════ -->
+<div class="page" id="p2">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
+    <div>
+      <h2 style="font-family:'Noto Serif TC',serif;font-size:18px;margin-bottom:4px">採購清單</h2>
+      <div style="font-size:12px;color:var(--muted)">彙整需購入的商品數量，勾選已採購</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <span style="font-size:12px;color:var(--muted)">納入狀態：</span>
+      <div style="display:flex;gap:6px;flex-wrap:wrap" id="shFilterRow">
+        <button class="btn btn-ghost btn-sm sh-ft on" id="shft-pending" onclick="toggleShFilter('pending',this)">待確認</button>
+        <button class="btn btn-ghost btn-sm sh-ft on" id="shft-confirmed" onclick="toggleShFilter('confirmed',this)">已確認</button>
+        <button class="btn btn-ghost btn-sm sh-ft" id="shft-shipped" onclick="toggleShFilter('shipped',this)">已出貨</button>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="loadShoppingData()">↻ 重新整理</button>
+      <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨 列印</button>
+    </div>
+  </div>
+
+  <!-- 統計列 -->
+  <div id="shSummary" style="display:none;background:var(--gbg);border:1px solid #C0DD97;border-radius:var(--r);padding:1rem 1.25rem;margin-bottom:1rem;display:none">
+    <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:center">
+      <div style="text-align:center"><div style="font-size:22px;font-weight:500;color:var(--green)" id="shStatOrders">0</div><div style="font-size:11px;color:var(--muted)">筆訂單</div></div>
+      <div style="text-align:center"><div style="font-size:22px;font-weight:500;color:var(--green)" id="shStatItems">0</div><div style="font-size:11px;color:var(--muted)">樣商品</div></div>
+      <div style="text-align:center"><div style="font-size:22px;font-weight:500;color:var(--green)" id="shStatQty">0</div><div style="font-size:11px;color:var(--muted)">件合計</div></div>
+      <div style="flex:1;min-width:160px">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:3px"><span>採購進度</span><span id="shProgress">0/0</span></div>
+        <div style="background:var(--warm);border-radius:4px;height:6px;overflow:hidden"><div id="shProgressBar" style="background:var(--green);height:100%;border-radius:4px;width:0%;transition:width .3s"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="shContainer"><div style="text-align:center;padding:3rem;color:var(--muted)">切換到此頁籤後自動載入</div></div>
+</div>
+
 <!-- 編輯 Modal -->
 <div class="modal-overlay" id="editModal">
   <div class="modal">
@@ -309,6 +367,182 @@ let products=[];
 let orders = [];
 
 // ── 初始化 ──
+// ════════════ 採購清單邏輯 ════════════
+let shOrders = [];
+let shFilters = new Set(['pending','confirmed']);
+let shBought = new Set(JSON.parse(localStorage.getItem('cp_admin_bought') || '[]'));
+
+function toggleShFilter(status, el){
+  if(shFilters.has(status)){
+    if(shFilters.size === 1) return;
+    shFilters.delete(status);
+    el.classList.remove('on');
+  } else {
+    shFilters.add(status);
+    el.classList.add('on');
+  }
+  renderShopping();
+}
+
+async function loadShoppingData(){
+  document.getElementById('shContainer').innerHTML =
+    '<div style="text-align:center;padding:3rem;color:var(--muted)">載入中...</div>';
+
+  // 如果已有訂單資料就直接用，否則重新載入
+  if(orders.length > 0){
+    shOrders = orders;
+    renderShopping();
+  } else {
+    try {
+      const res = await fetch(SCRIPT_URL + '?action=getOrders');
+      const data = await res.json();
+      if(data.ok){ shOrders = data.orders; renderShopping(); }
+      else { document.getElementById('shContainer').innerHTML = '<div style="text-align:center;padding:3rem;color:var(--muted)">載入失敗</div>'; }
+    } catch(e) {
+      document.getElementById('shContainer').innerHTML = '<div style="text-align:center;padding:3rem;color:var(--muted)">無法連線</div>';
+    }
+  }
+}
+
+function shNormStatus(s){
+  return {'待確認':'pending','已確認':'confirmed','已出貨':'shipped','完成':'done'}[s] || s || 'pending';
+}
+
+function shParseItems(str){
+  if(!str) return [];
+  return str.split(',').map(s => {
+    s = s.trim();
+    const qm = s.match(/x(\d+)$/);
+    const qty = qm ? parseInt(qm[1]) : 1;
+    const rest = qm ? s.slice(0,-qm[0].length) : s;
+    const sm = rest.match(/\(([^)]+)\)$/);
+    const size = sm ? sm[1] : '—';
+    const name = sm ? rest.slice(0,-sm[0].length).trim() : rest.trim();
+    return {name, size, qty};
+  });
+}
+
+const SH_BRANDS = ['Polo Ralph Lauren','Nike','Jordan','Tommy Hilfiger','Calvin Klein',"Levi's","Carter's",'Barefoot Dreams','Angel Dear','Hanna Andersson'];
+function shGetBrand(name){
+  for(const b of SH_BRANDS){ if(name.startsWith(b)) return b; }
+  return name.split(' ')[0] || '其他';
+}
+
+function renderShopping(){
+  const src = shOrders.length > 0 ? shOrders : orders;
+  const filtered = src.filter(o => shFilters.has(shNormStatus(o.status)));
+
+  if(!filtered.length){
+    document.getElementById('shContainer').innerHTML =
+      '<div style="text-align:center;padding:3rem;color:var(--muted);font-size:14px">目前沒有符合條件的訂單</div>';
+    document.getElementById('shSummary').style.display = 'none';
+    return;
+  }
+
+  const itemMap = {};
+  filtered.forEach(o => {
+    const customer = o.line_name || o.line || '';
+    const oid = o.order_id || o.id || '';
+    shParseItems(o.items || '').forEach(item => {
+      const key = item.name + '__' + item.size;
+      if(!itemMap[key]) itemMap[key] = {brand:shGetBrand(item.name), name:item.name, size:item.size, qty:0, orders:[]};
+      itemMap[key].qty += item.qty;
+      itemMap[key].orders.push({oid, customer, qty:item.qty});
+    });
+  });
+
+  const brandMap = {};
+  Object.entries(itemMap).forEach(([key, item]) => {
+    if(!brandMap[item.brand]) brandMap[item.brand] = [];
+    brandMap[item.brand].push({key, ...item});
+  });
+
+  const totalItems = Object.keys(itemMap).length;
+  const totalQty = Object.values(itemMap).reduce((a,x) => a+x.qty, 0);
+  const boughtQty = [...shBought].reduce((a,k) => a+(itemMap[k]?.qty||0), 0);
+
+  const summary = document.getElementById('shSummary');
+  summary.style.display = 'flex';
+  document.getElementById('shStatOrders').textContent = filtered.length;
+  document.getElementById('shStatItems').textContent = totalItems;
+  document.getElementById('shStatQty').textContent = totalQty;
+  document.getElementById('shProgress').textContent = boughtQty + '/' + totalQty + ' 件';
+  document.getElementById('shProgressBar').style.width = totalQty ? (boughtQty/totalQty*100).toFixed(0)+'%' : '0%';
+
+  const sortedBrands = Object.keys(brandMap).sort();
+
+  // 用 DOM 建立，完全避免引號拼接問題
+  const container = document.getElementById('shContainer');
+  container.innerHTML = '';
+
+  sortedBrands.forEach(brand => {
+    const items = brandMap[brand].sort((a,b) => a.name.localeCompare(b.name)||a.size.localeCompare(b.size));
+    const brandQty = items.reduce((a,x)=>a+x.qty,0);
+    const brandBoughtCount = items.filter(x=>shBought.has(x.key)).length;
+
+    const box = document.createElement('div');
+    box.style.cssText = 'background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);margin-bottom:10px;overflow:hidden';
+
+    // 品牌標題
+    const hd = document.createElement('div');
+    hd.className = 'sh-brand-hd';
+    hd.innerHTML = '<span class="sh-brand-name">' + brand + '</span>' +
+      '<span style="font-size:12px;color:var(--muted)">' + brandBoughtCount + '/' + items.length + ' 樣・' + brandQty + ' 件</span>';
+    hd.addEventListener('click', function(){ toggleShBrand(this); });
+
+    const body = document.createElement('div');
+
+    // 商品列
+    items.forEach(item => {
+      const bought = shBought.has(item.key);
+      const row = document.createElement('div');
+      row.className = 'sh-item-row' + (bought ? ' bought' : '');
+
+      const chk = document.createElement('div');
+      chk.className = 'sh-check' + (bought ? ' on' : '');
+      chk.textContent = bought ? '✓' : '';
+      chk.addEventListener('click', (function(k){ return function(){ shToggle(k); }; })(item.key));
+
+      const info = document.createElement('div');
+      info.style.cssText = 'flex:1;min-width:0';
+      const sizeTag = document.createElement('span');
+      sizeTag.className = 'sh-size' + (bought ? ' done' : '');
+      sizeTag.textContent = item.size !== '—' ? item.size : '無';
+      const name = document.createElement('span');
+      name.className = 'sh-name' + (bought ? ' done' : '');
+      name.textContent = item.name;
+      const sub = document.createElement('div');
+      sub.style.cssText = 'font-size:11px;color:var(--muted);margin-top:2px';
+      sub.textContent = item.orders.map(o => o.customer + '×' + o.qty).join('・');
+      info.appendChild(sizeTag);
+      info.appendChild(name);
+      info.appendChild(sub);
+
+      const qty = document.createElement('div');
+      qty.className = 'sh-qty' + (bought ? ' done' : '');
+      qty.textContent = item.qty + ' 件';
+
+      row.appendChild(chk);
+      row.appendChild(info);
+      row.appendChild(qty);
+      body.appendChild(row);
+    });
+
+    box.appendChild(hd);
+    box.appendChild(body);
+    container.appendChild(box);
+  });
+}
+
+function shToggle(key){
+  if(shBought.has(key)) shBought.delete(key);
+  else shBought.add(key);
+  localStorage.setItem('cp_admin_bought', JSON.stringify([...shBought]));
+  renderShopping();
+}
+
+// ════════════ END 採購清單 ════════════
+
 function init(){
   renderSzChecks('qaSzChecks',[],{});
   updId();
@@ -320,6 +554,7 @@ function sw(i){
   document.querySelectorAll('.ntab').forEach((t,j)=>t.classList.toggle('on',i===j));
   document.querySelectorAll('.page').forEach((p,j)=>p.classList.toggle('on',i===j));
   if(i===1){ loadOrders(); }
+  if(i===2){ loadShoppingData(); }
 }
 
 // ── 從 Sheets 載入商品 ──
@@ -619,7 +854,12 @@ function renderOrders(){
       '<td style="font-weight:500;color:var(--acc-dk)">NT$' + Number(total).toLocaleString() + '</td>' +
       '<td><span class="spill ' + s.c + '">' + s.l + '</span></td>' +
       '<td><div class="tdacts">' +
-        (nxt ? '<button class="btn btn-ghost btn-sm" onclick="advStatus(\'' + oid + '\',\'' + nxt + '\')">' + NL[status] + '</button>' : '') +
+        '<select class="status-sel" onchange="advStatus(\'' + oid + '\', this.value, this)">' +
+          '<option value="pending"' + (status==='pending'?' selected':'') + '>待確認</option>' +
+          '<option value="confirmed"' + (status==='confirmed'?' selected':'') + '>已確認</option>' +
+          '<option value="shipped"' + (status==='shipped'?' selected':'') + '>已出貨</option>' +
+          '<option value="done"' + (status==='done'?' selected':'') + '>完成</option>' +
+        '</select>' +
         '<button class="btn btn-ghost btn-sm" onclick="copyOid(\'' + oid + '\')">複製單號</button>' +
       '</div></td>' +
     '</tr>';
@@ -640,21 +880,29 @@ function renderOrders(){
   document.getElementById('stFee').textContent = '';
 }
 
-async function advStatus(id, ns){
+async function advStatus(id, ns, selectEl){
   const o = orders.find(x => (x.order_id||x.id) === id);
   if(!o) return;
+
+  // 確認對話框，防止誤操作
+  const statusLabel = {'pending':'待確認','confirmed':'已確認','shipped':'已出貨','done':'完成'};
+  if(!confirm('確定要將狀態改為「' + (statusLabel[ns]||ns) + '」嗎？')) {
+    // 取消：把選單恢復原本值
+    if(selectEl) selectEl.value = o.status;
+    return;
+  }
+
   o.status = ns;
   renderOrders();
-  toast('✓','狀態已更新，同步中...');
+  toast('✓', '狀態已更新');
   try{
     await fetch(SCRIPT_URL, {
       method: 'POST', mode: 'no-cors',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({action: 'updateOrderStatus', order_id: id, status: ns})
     });
-    toast('✓','狀態已同步到 Sheets');
   } catch(e){
-    toast('!','本地已更新，Sheets 同步失敗');
+    toast('!','Sheets 同步失敗，請重新載入');
   }
 }
 
