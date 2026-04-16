@@ -96,6 +96,15 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream);color:var(--d
 /* REFRESH BTN */
 .refresh-btn{display:block;margin:0 auto 24px;padding:14px 32px;background:#fff;border:2px solid var(--bdr);border-radius:12px;font-size:17px;font-weight:700;color:var(--muted);cursor:pointer;font-family:inherit;transition:all .15s}
 .refresh-btn:active{border-color:var(--sage-dk);color:var(--sage-dk)}
+
+/* IMAGE ZOOM MODAL */
+.img-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:200;align-items:center;justify-content:center;padding:20px}
+.img-modal.open{display:flex}
+.img-modal-inner{position:relative;max-width:92vw;max-height:88vh}
+.img-modal-inner img{max-width:90vw;max-height:82vh;object-fit:contain;border-radius:12px;display:block}
+.img-modal-close{position:absolute;top:-22px;right:-22px;width:48px;height:48px;background:#fff;border:none;border-radius:50%;font-size:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#333;box-shadow:0 2px 12px rgba(0,0,0,.4);line-height:1;font-weight:700}
+.item-img{cursor:pointer}
+.item-img:hover img{opacity:.85}
 </style>
 </head>
 <body>
@@ -245,7 +254,7 @@ function renderOrders(){
               const isChecked = !!checkedItems[oid+'_'+i];
               return `
                 <div class="item-row ${isChecked?'checked':''}" id="ir-${oid}-${i}">
-                  <div class="item-img">
+                  <div class="item-img" ${imgUrl?'onclick="openImgModal(event)"':''}>
                     ${imgUrl
                       ? '<img src="'+imgUrl+'" alt="'+item.name+'" onerror="this.parentNode.innerHTML=\'暫無圖片\'">'
                       : '暫無圖片'}
@@ -370,7 +379,10 @@ function renderTotalCard(){
 
 loadOrders();
 
-function openImgModal(url){
+function openImgModal(e){
+  // 支援傳 event 或直接傳 url string
+  var url = (typeof e === 'string') ? e : (e.target.querySelector('img')||e.target).src;
+  if(!url || url === window.location.href) return;
   document.getElementById('imgModalSrc').src = url;
   document.getElementById('imgModal').classList.add('open');
   document.body.style.overflow = 'hidden';
