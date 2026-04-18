@@ -242,8 +242,9 @@ tr:hover td{background:var(--bg)}
 
   <div class="sec-hd">
     <h2>已上架商品 <span id="prodCount" style="font-family:monospace;font-size:14px;color:var(--muted);font-weight:400"></span></h2>
-    <div style="display:flex;gap:8px">
-      <button class="btn btn-ghost btn-sm" onclick="loadFromSheets()">↻ 從 Sheets 重新載入</button>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <input class="search" id="prodSearch" placeholder="搜尋商品名稱、描述…" oninput="renderProducts()" style="max-width:220px"/>
+      <button class="btn btn-ghost btn-sm" onclick="loadFromSheets()">↻ 重新載入</button>
       <button class="btn btn-ghost btn-sm" onclick="exportProducts()">↓ 匯出</button>
     </div>
   </div>
@@ -758,11 +759,16 @@ async function addProduct(){
   setSyncState('syncing','同步中...');
   document.getElementById('syncMsg').textContent='同步中...';
   try{
-    await fetch(SCRIPT_URL,{
-      method:'POST',mode:'no-cors',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({action:'addProduct',...p})
+    const xhrAdd = new XMLHttpRequest();
+    await new Promise(resolve => {
+      xhrAdd.open('POST', SCRIPT_URL, true);
+      xhrAdd.setRequestHeader('Content-Type','application/json');
+      xhrAdd.onload = resolve; xhrAdd.onerror = resolve; xhrAdd.ontimeout = resolve;
+      xhrAdd.timeout = 15000;
+      xhrAdd.send(JSON.stringify({action:'addProduct',...p}));
     });
+    let addOk = false;
+    try { addOk = JSON.parse(xhrAdd.responseText).ok === true; } catch(e){}
     setSyncState('ok','已同步');
     document.getElementById('syncMsg').textContent='';
     toast('✓',`#${id} 已上架並同步到 Sheets`);
@@ -781,8 +787,17 @@ function clearQa(){
 
 // ── 渲染商品 ──
 function renderProducts(){
-  document.getElementById('prodCount').textContent=`(${products.length})`;
-  document.getElementById('prodGrid').innerHTML=products.map(p=>`
+  const q = (document.getElementById('prodSearch')?.value || '').toLowerCase().trim();
+  const filtered = q ? products.filter(p =>
+    p.name.toLowerCase().includes(q) ||
+    (p.desc||'').toLowerCase().includes(q) ||
+    (p.id||'').toLowerCase().includes(q) ||
+    (p.cat||'').toLowerCase().includes(q)
+  ) : products;
+  document.getElementById('prodCount').textContent = q
+    ? `(${filtered.length}/${products.length})`
+    : `(${products.length})`;
+  document.getElementById('prodGrid').innerHTML=filtered.map(p=>`
     <div class="prod-card">
       <div class="prod-img-w">
         ${p.img_url?`<img src="${p.img_url}" alt="${p.name}">`:`<div class="prod-no-img">📷 未上傳圖片</div>`}
@@ -825,6 +840,9 @@ function openEdit(id){
 async function saveEdit(){
   const id=document.getElementById('editId').value;
   const p=products.find(x=>x.id===id);
+  if(!p) return;
+
+  // 更新本地資料
   p.name=document.getElementById('editName').value.trim();
   p.desc=document.getElementById('editDesc').value.trim();
   p.price=parseInt(document.getElementById('editPrice').value);
@@ -833,12 +851,34 @@ async function saveEdit(){
   p.sizes_stock=getSzStock('editSzChecks');
   const img=document.getElementById('editImgData').value;
   if(img)p.img_url=img;
-  renderProducts();closeModal();
+
+  renderProducts();
+  closeModal();
   setSyncState('syncing','同步中...');
-  try{
-    await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'updateProduct',...p})});
-    setSyncState('ok','已同步');toast('✓','商品已更新並同步');
-  }catch(e){setSyncState('err','同步失敗');toast('!','本地已更新，Sheets 同步失敗');}
+
+  // 用 XHR 取代 no-cors fetch，可以知道是否成功
+  const payload = JSON.stringify({action:'updateProduct',...p});
+  const success = await new Promise(resolve => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', SCRIPT_URL, true);
+    xhr.setRequestHeader('Content-Type','application/json');
+    xhr.onload = function(){
+      try { const d = JSON.parse(xhr.responseText); resolve(d.ok === true); }
+      catch(e) { resolve(false); }
+    };
+    xhr.onerror = function(){ resolve(false); };
+    xhr.ontimeout = function(){ resolve(false); };
+    xhr.timeout = 15000;
+    xhr.send(payload);
+  });
+
+  if(success){
+    setSyncState('ok','已同步');
+    toast('✓','商品已更新並同步到 Sheets');
+  } else {
+    setSyncState('err','同步失敗，資料已在本地更新');
+    toast('!','Sheets 同步失敗，請重新整理確認');
+  }
 }
 
 async function delProduct(id){
