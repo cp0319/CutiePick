@@ -596,6 +596,14 @@ function init(){
   updId();
   loadFromSheets();
   loadOrders();
+  // 確保搜尋框各種輸入方式都能觸發
+  setTimeout(function(){
+    const srch = document.getElementById('prodSearch');
+    if(srch){
+      srch.addEventListener('keyup', renderProducts);
+      srch.addEventListener('search', renderProducts);
+    }
+  }, 500);
 }
 
 function sw(i){
@@ -614,9 +622,14 @@ async function loadFromSheets(){
     if(data.ok){
       products=data.products.map(p=>{
         const sizes = Array.isArray(p.sizes)?p.sizes:(p.sizes?String(p.sizes).split(',').map(s=>s.trim()).filter(Boolean):[]);
-        // sizes_stock 從物件或字串轉成物件
+        // sizes_stock 從物件或字串轉成物件 "0-3M:2,3-6M:1" → {0-3M:2, 3-6M:1}
         let sizesStock = {};
-        if(p.sizes_stock && typeof p.sizes_stock === 'object'){
+        if(p.sizes_stock && typeof p.sizes_stock === 'string' && p.sizes_stock.trim()) {
+          p.sizes_stock.split(',').forEach(pair => {
+            const parts = pair.split(':');
+            if(parts.length === 2) sizesStock[parts[0].trim()] = parseInt(parts[1].trim()) || 0;
+          });
+        } else if(p.sizes_stock && typeof p.sizes_stock === 'object') {
           sizesStock = p.sizes_stock;
         }
         return {...p, price:Number(p.price), sizes, sizes_stock:sizesStock};
@@ -699,27 +712,27 @@ function getSzStock(cid){
 }
 
 // ── 圖片網址預覽 ──
-function prevImgUrl(inputId, previewId){
-  const url = document.getElementById(inputId).value.trim();
-  const preview = document.getElementById(previewId);
-  if(!url){ preview.innerHTML='預覽'; return; }
-
-  let imgUrl = url;
-
-  // Google Drive 分享連結轉換
-  const driveMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-  if(driveMatch){
-    // 用 thumbnail 格式，瀏覽器不會擋
-    imgUrl = 'https://drive.google.com/thumbnail?id=' + driveMatch[1] + '&sz=w400';
-    document.getElementById(inputId).value = imgUrl;
-  }
-
-  // uc?export=view 也轉成 thumbnail
+function normalizeDriveUrl(url) {
+  if(!url) return url;
+  // /file/d/ID/view  →  thumbnail
+  const fileMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if(fileMatch) return 'https://drive.google.com/thumbnail?id=' + fileMatch[1] + '&sz=w800';
+  // /d/ID/ 格式（資料夾分享）
+  const dMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  if(dMatch) return 'https://drive.google.com/thumbnail?id=' + dMatch[1] + '&sz=w800';
+  // uc?export=view&id=ID
   const ucMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-  if(ucMatch && url.includes('drive.google.com/uc')){
-    imgUrl = 'https://drive.google.com/thumbnail?id=' + ucMatch[1] + '&sz=w400';
-    document.getElementById(inputId).value = imgUrl;
-  }
+  if(ucMatch && url.includes('drive.google.com')) return 'https://drive.google.com/thumbnail?id=' + ucMatch[1] + '&sz=w800';
+  return url;
+}
+
+function prevImgUrl(inputId, previewId){
+  const raw = document.getElementById(inputId).value.trim();
+  const preview = document.getElementById(previewId);
+  if(!raw){ preview.innerHTML='預覽'; return; }
+
+  const imgUrl = normalizeDriveUrl(raw);
+  if(imgUrl !== raw) document.getElementById(inputId).value = imgUrl;
 
   const img = document.createElement('img');
   img.style.cssText = 'width:100%;height:100%;object-fit:cover';
@@ -744,6 +757,7 @@ async function addProduct(){
   const cat=document.getElementById('qaCat').value;
   updId();
   const id=document.getElementById('qaId').value;
+  const rawImgUrl = document.getElementById('qaImgData').value||'';
   const p={
     id,cat,name,
     desc:document.getElementById('qaDesc').value.trim(),
@@ -751,7 +765,7 @@ async function addProduct(){
     sizes:getChecked('qaSzChecks'),
     sizes_stock:getSzStock('qaSzChecks'),
     stock:document.getElementById('qaStock').value,
-    img_url:document.getElementById('qaImgData').value||''
+    img_url: normalizeDriveUrl(rawImgUrl)
   };
   products.push(p);
   renderProducts();
@@ -787,7 +801,8 @@ function clearQa(){
 
 // ── 渲染商品 ──
 function renderProducts(){
-  const q = (document.getElementById('prodSearch')?.value || '').toLowerCase().trim();
+  const searchEl = document.getElementById('prodSearch');
+  const q = searchEl ? searchEl.value.toLowerCase().trim() : '';
   const filtered = q ? products.filter(p =>
     p.name.toLowerCase().includes(q) ||
     (p.desc||'').toLowerCase().includes(q) ||
